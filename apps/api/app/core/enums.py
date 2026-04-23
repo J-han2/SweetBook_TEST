@@ -1,0 +1,21 @@
+from enum import Enum
+
+
+class TagCategory(str, Enum):
+    EMOTION = "emotion"
+    EVENT = "event"
+    SYMBOL = "symbol"
+    RELATION = "relation"
+    CUSTOM = "custom"
+
+
+class BookDraftStatus(str, Enum):
+    DRAFT = "draft"
+    FINALIZED = "finalized"
+
+
+class OrderStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
