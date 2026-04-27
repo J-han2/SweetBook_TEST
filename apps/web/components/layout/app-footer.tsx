@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export function AppFooter() {
   return (
-    <footer className="mt-24 border-t border-white/40 py-16">
+    <footer className="app-footer mt-24 border-t border-white/40 py-16">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 px-6 text-center md:flex-row md:text-left">
         <div>
           <p className="font-display text-2xl italic text-[var(--accent-strong)]">DreamArchive</p>
-          <p className="mt-2 text-sm italic text-[var(--muted)]">잠에서 깨어도 남겨 두는 꿈의 기록.</p>
+          <p className="mt-2 text-sm italic text-[var(--muted)]">깨어난 뒤에도 꺼내 읽는 꿈의 기록.</p>
         </div>
 
         <nav className="flex flex-wrap justify-center gap-6 text-sm italic text-[var(--muted)]">

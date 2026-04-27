@@ -48,15 +48,15 @@ export function themeLabel(value: string | null) {
 export function coverThemeClasses(value: string | null | undefined) {
   switch (value) {
     case "midnight-blue":
-      return "from-[#dbd7fb] via-[#b7c8f0] to-[#f4ebdf]";
+      return "from-[#e7e4fb] via-[#d3dcf3] to-[#efe9e2]";
     case "starlit-plum":
-      return "from-[#7f75a7] via-[#b899c7] to-[#ead9e5]";
+      return "from-[#8f87b1] via-[#c6afd1] to-[#efe3ea]";
     case "cream-dusk":
-      return "from-[#f4ecd7] via-[#e5d7d1] to-[#d4dddf]";
+      return "from-[#f5eedf] via-[#e9ddd8] to-[#dde4e5]";
     case "emerald-night":
-      return "from-[#dcebdc] via-[#aec6b5] to-[#f2eadf]";
+      return "from-[#e5efe3] via-[#bfd1c2] to-[#f4eee4]";
     default:
-      return "from-[#ede5fb] via-[#e9dde8] to-[#f7f1e8]";
+      return "from-[#f1eafb] via-[#ede3ea] to-[#f8f3eb]";
   }
 }
 

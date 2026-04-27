@@ -94,7 +94,7 @@ export function SelectPopover({
         ref={triggerRef}
         type="button"
         className={`field-input relative flex min-h-[50px] w-full items-center justify-between gap-4 pr-12 text-left ${
-          open ? "bg-white/88 shadow-[0_0_0_4px_rgba(232,222,253,0.42)]" : ""
+          open ? "bg-white/88" : ""
         }`}
         onClick={() => setOpen((current) => !current)}
       >
@@ -123,7 +123,7 @@ export function SelectPopover({
         ? createPortal(
             <div
               ref={menuRef}
-              className="dropdown-popover absolute z-[40] overflow-hidden rounded-[24px] border border-[rgba(122,97,146,0.14)] bg-[rgba(255,255,255,0.96)] shadow-[0_26px_60px_rgba(114,91,125,0.18)] backdrop-blur-xl"
+              className="dropdown-popover absolute z-[40] overflow-hidden rounded-[24px] border border-[rgba(122,97,146,0.12)] bg-[rgba(255,255,255,0.96)] shadow-none backdrop-blur-xl"
               style={{
                 top: `${menuStyle.top}px`,
                 left: `${menuStyle.left}px`,
@@ -144,7 +144,7 @@ export function SelectPopover({
                       type="button"
                       className={`flex w-full items-center rounded-[18px] px-4 py-3 text-left text-sm transition ${
                         active
-                          ? "bg-[rgba(232,222,253,0.9)] text-[var(--accent-strong)]"
+                          ? "bg-[linear-gradient(180deg,rgba(237,231,251,0.92),rgba(245,241,251,0.9))] text-[var(--accent-strong)]"
                           : "text-[var(--muted-strong)] hover:bg-[rgba(245,241,251,0.85)]"
                       }`}
                       onClick={() => {

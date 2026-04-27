@@ -30,7 +30,7 @@ export function DreamListItem({
           router.push(`/dreams/${dream.id}`);
         }
       }}
-      className="glass-card flex cursor-pointer flex-col gap-5 p-5 transition duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-strong)] focus-visible:-translate-y-1 focus-visible:shadow-[var(--shadow-strong)] focus-visible:outline-none md:flex-row md:items-center md:p-6"
+      className="glass-card interactive-card archive-card-frame flex cursor-pointer flex-col gap-5 p-5 transition duration-300 hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline-none md:flex-row md:items-center md:p-6"
     >
       <img
         src={resolveMediaUrl(dream.representative_image_url)}
@@ -45,11 +45,6 @@ export function DreamListItem({
             <h3 className="mt-2 font-display text-3xl leading-tight text-[var(--accent-strong)]">{dream.title}</h3>
           </div>
 
-          {dream.is_seed ? (
-            <span className="rounded-full bg-[rgba(232,222,253,0.9)] px-3 py-1 text-[11px] font-semibold tracking-[0.16em] text-[var(--accent-strong)]">
-              샘플
-            </span>
-          ) : null}
         </div>
 
         <p className="mt-4 text-sm leading-7 text-[var(--muted-strong)]">{dream.content_preview}</p>

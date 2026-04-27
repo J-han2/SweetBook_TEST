@@ -201,7 +201,7 @@ export function NewBookDraftClient() {
                     <img
                       src={resolveMediaUrl(dream.representative_image_url)}
                       alt={dream.title}
-                      className="h-28 w-24 rounded-[18px] object-cover shadow-[0_20px_30px_rgba(108,95,142,0.12)]"
+                      className="h-28 w-24 rounded-[18px] object-cover"
                     />
 
                     <div className="min-w-0 flex-1">

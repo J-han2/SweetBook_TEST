@@ -206,7 +206,7 @@ export function DreamForm({
         {previewError ? <p className="mt-3 text-sm text-[#8f4854]">{previewError}</p> : null}
 
         {previewMutation.isPending ? (
-          <div className="mt-5 overflow-hidden rounded-[24px] border border-[rgba(122,97,146,0.12)] bg-[linear-gradient(135deg,rgba(232,222,253,0.6),rgba(255,255,255,0.82),rgba(245,215,223,0.56))] p-5 shadow-[0_18px_45px_rgba(114,91,125,0.08)]">
+          <div className="mt-5 overflow-hidden rounded-[24px] border border-[rgba(122,97,146,0.1)] bg-[linear-gradient(145deg,rgba(236,228,251,0.48),rgba(255,255,255,0.86)_38%,rgba(248,238,242,0.42)_100%)] p-5">
             <div className="flex items-center gap-4">
               <div className="ai-loader-orb" />
               <div className="min-w-0">

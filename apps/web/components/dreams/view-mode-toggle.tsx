@@ -13,7 +13,9 @@ export function ViewModeToggle({
         type="button"
         onClick={() => onChange("cards")}
         className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-          value === "cards" ? "bg-[var(--accent)] text-white shadow-[0_10px_24px_rgba(108,95,142,0.18)]" : "text-[var(--muted-strong)]"
+          value === "cards"
+            ? "bg-[linear-gradient(135deg,#6c618a_0%,#7e73a0_48%,#9389b7_100%)] text-white"
+            : "text-[var(--muted-strong)]"
         }`}
       >
         카드형
@@ -22,7 +24,9 @@ export function ViewModeToggle({
         type="button"
         onClick={() => onChange("list")}
         className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-          value === "list" ? "bg-[var(--accent)] text-white shadow-[0_10px_24px_rgba(108,95,142,0.18)]" : "text-[var(--muted-strong)]"
+          value === "list"
+            ? "bg-[linear-gradient(135deg,#6c618a_0%,#7e73a0_48%,#9389b7_100%)] text-white"
+            : "text-[var(--muted-strong)]"
         }`}
       >
         리스트형
