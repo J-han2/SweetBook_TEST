@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
 type CalendarCell = {
   iso: string | null;
@@ -198,7 +198,7 @@ export function CalendarField({
                   onClick={() =>
                     setDisplayMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
                   }
-                  aria-label="Previous month"
+                  aria-label="이전 달"
                 >
                   <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M11.75 5.5L7.25 10L11.75 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -213,7 +213,7 @@ export function CalendarField({
                   onClick={() =>
                     setDisplayMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
                   }
-                  aria-label="Next month"
+                  aria-label="다음 달"
                 >
                   <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8.25 5.5L12.75 10L8.25 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -221,7 +221,7 @@ export function CalendarField({
                 </button>
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold tracking-[0.16em] text-[var(--muted)]">
                 {weekdays.map((weekday) => (
                   <span key={weekday} className="py-1.5">
                     {weekday}
@@ -271,7 +271,7 @@ export function CalendarField({
                     setOpen(false);
                   }}
                 >
-                  Today
+                  오늘
                 </button>
 
                 {value ? (
@@ -283,7 +283,7 @@ export function CalendarField({
                       setOpen(false);
                     }}
                   >
-                    Clear
+                    지우기
                   </button>
                 ) : (
                   <span />

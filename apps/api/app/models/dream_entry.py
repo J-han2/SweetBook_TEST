@@ -20,7 +20,6 @@ class DreamEntry(Base):
     title: Mapped[str] = mapped_column(String(200))
     dream_date: Mapped[date] = mapped_column(Date, index=True)
     content: Mapped[str] = mapped_column(Text)
-    memo: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,

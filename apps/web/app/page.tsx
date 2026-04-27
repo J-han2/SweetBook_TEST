@@ -12,8 +12,8 @@ export default function HomePage() {
           <p className="section-kicker">Dream Journal Archive Service</p>
           <h1 className="page-title mt-6">A gentle home for your memories.</h1>
           <p className="page-copy mx-auto mt-6 max-w-2xl">
-            DreamArchive는 꿈일기 콘텐츠를 기록하고 다시 탐색하는 경험이 중심인 서비스입니다.
-            책 초안과 주문은 그 기록을 확장하는 부가 기능으로 자연스럽게 이어집니다.
+            떠오른 장면과 감정을 꿈일기로 남기고, 시간이 지난 뒤에도 다시 꺼내 읽어보세요. 마음에 남는 기록은 골라서 한 권의 책으로
+            차분히 엮을 수 있어요.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link href="/dreams/new" className="primary-button min-w-[180px]">

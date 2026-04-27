@@ -7,7 +7,7 @@ const links = [
   { href: "/", label: "Home" },
   { href: "/dreams", label: "Archive" },
   { href: "/dreams/new", label: "Create Dream" },
-  { href: "/book-drafts", label: "My Books" },
+  { href: "/orders", label: "My Books" },
 ];
 
 function isActiveLink(pathname: string, href: string) {
@@ -23,8 +23,8 @@ function isActiveLink(pathname: string, href: string) {
     return pathname === "/dreams/new";
   }
 
-  if (href === "/book-drafts") {
-    return pathname.startsWith("/book-drafts") || pathname.startsWith("/orders");
+  if (href === "/orders") {
+    return pathname.startsWith("/orders") || pathname.startsWith("/book-drafts");
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -41,7 +41,7 @@ export function AppHeader() {
             DreamArchive
           </Link>
           <p className="hidden text-sm text-[var(--muted)] lg:block">
-            꿈을 기록하고, 다시 읽고, 한 권의 흐름으로 엮는 콘텐츠 아카이브
+            꿈을 기록하고, 다시 읽고, 한 권의 책으로 엮어보세요.
           </p>
         </div>
 

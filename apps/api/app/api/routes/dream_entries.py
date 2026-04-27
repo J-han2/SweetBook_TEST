@@ -39,7 +39,6 @@ def list_dream_entries(
             or_(
                 DreamEntry.title.ilike(term),
                 DreamEntry.content.ilike(term),
-                DreamEntry.memo.ilike(term),
             )
         )
 
@@ -78,7 +77,6 @@ async def create_dream_entry(
     title: str = Form(...),
     dream_date: date = Form(...),
     content: str = Form(...),
-    memo: str | None = Form(default=None),
     manual_tags: str | None = Form(default=None),
     uploaded_image: UploadFile | None = File(default=None),
 ) -> DreamEntryDetailRead:
@@ -101,7 +99,6 @@ async def create_dream_entry(
         title=title,
         dream_date=dream_date,
         content=content,
-        memo=memo.strip() if memo else None,
         uploaded_image_url=uploaded_image_url,
         representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
         mood_summary=build_mood_summary(tag_names),
@@ -121,7 +118,6 @@ async def update_dream_entry(
     title: str | None = Form(default=None),
     dream_date: date | None = Form(default=None),
     content: str | None = Form(default=None),
-    memo: str | None = Form(default=None),
     manual_tags: str | None = Form(default=None),
     remove_uploaded_image: bool = Form(default=False),
     uploaded_image: UploadFile | None = File(default=None),
@@ -150,9 +146,6 @@ async def update_dream_entry(
         if not content:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="본문은 비워 둘 수 없습니다.")
         entry.content = content
-
-    if memo is not None:
-        entry.memo = memo.strip() or None
 
     if remove_uploaded_image and not uploaded_image:
         entry.uploaded_image_url = None

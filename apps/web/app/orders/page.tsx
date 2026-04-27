@@ -18,25 +18,32 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-12">
-      <section>
-        <p className="section-kicker">My Books</p>
-        <h1 className="page-title mt-4">Your Book Collections</h1>
-        <p className="page-copy mt-5 max-w-3xl">
-          Finalize된 꿈일기 책은 주문으로 전환되고, 상태 관리와 export JSON 확인이 가능합니다. 실제 결제와 배송은 구현하지 않고 제출용 흐름에 집중했습니다.
-        </p>
+      <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="section-kicker">My Books</p>
+          <h1 className="page-title mt-4">Track Your Book Orders</h1>
+          <p className="page-copy mt-5 max-w-3xl">
+            만들어 둔 책과 주문 상태를 한눈에 확인해보세요. 작업 중인지, 완료되었는지, 내보내기 파일은 준비되었는지 이곳에서
+            바로 볼 수 있어요.
+          </p>
+        </div>
+
+        <Link href="/book-drafts" className="primary-button">
+          새 책 만들기
+        </Link>
       </section>
 
       {ordersQuery.isLoading ? (
-        <StatePanel title="주문 목록을 정리하는 중" description="책 표지, 상태, 생성일 정보를 차례대로 불러오고 있습니다." />
+        <StatePanel title="주문 목록을 불러오는 중" description="책 제목과 주문 상태를 정리하고 있어요." />
       ) : ordersQuery.isError ? (
-        <StatePanel title="주문 목록을 불러오지 못했습니다" description="백엔드 실행 상태와 API 연결을 확인해 주세요." />
+        <StatePanel title="주문 목록을 불러오지 못했어요" description="잠시 후 다시 시도해 주세요." />
       ) : orders.length === 0 ? (
         <StatePanel
-          title="아직 생성된 주문이 없습니다"
-          description="책 초안을 Finalize한 뒤 주문을 만들면 여기에서 진행 상태를 볼 수 있습니다."
+          title="아직 주문한 책이 없어요"
+          description="마음에 드는 꿈들을 골라 책으로 엮으면, 여기서 진행 상태를 확인할 수 있어요."
           action={
             <Link href="/book-drafts" className="primary-button">
-              책 초안 보러 가기
+              첫 책 만들기
             </Link>
           }
         />
@@ -55,8 +62,8 @@ export default function OrdersPage() {
                   <h2 className="font-display text-3xl text-[var(--accent-strong)]">{order.book_draft.title}</h2>
                   <div className="mt-3 flex flex-wrap gap-4 text-sm text-[var(--muted)]">
                     <span>{formatDate(order.created_at)}</span>
-                    <span>ID #{order.id}</span>
-                    <span>수량 {order.quantity}</span>
+                    <span>주문 #{order.id}</span>
+                    <span>{order.quantity}권</span>
                   </div>
                 </div>
               </div>
@@ -64,7 +71,7 @@ export default function OrdersPage() {
               <div className="flex flex-col items-start gap-4 md:items-end">
                 <StatusBadge status={order.status} />
                 <Link href={`/orders/${order.id}`} className="secondary-button">
-                  View Details
+                  상세 보기
                 </Link>
               </div>
             </article>

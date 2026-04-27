@@ -22,27 +22,27 @@ export function categoryLabel(category: TagCategory) {
 }
 
 export function bookDraftStatusLabel(status: BookDraftStatus) {
-  return status === "finalized" ? "Finalized" : "Draft";
+  return status === "finalized" ? "확정됨" : "초안";
 }
 
 export function orderStatusLabel(status: OrderStatus) {
   const labels: Record<OrderStatus, string> = {
-    pending: "Pending",
-    processing: "Processing",
-    completed: "Completed",
-    cancelled: "Cancelled",
+    pending: "주문 대기",
+    processing: "작업 중",
+    completed: "완료",
+    cancelled: "취소됨",
   };
   return labels[status];
 }
 
 export function themeLabel(value: string | null) {
   const labels: Record<string, string> = {
-    "midnight-blue": "Cloudscape",
-    "starlit-plum": "Velvet Night",
-    "cream-dusk": "Dawn Mist",
-    "emerald-night": "Emerald Moss",
+    "midnight-blue": "한밤의 푸른빛",
+    "starlit-plum": "별빛 자두빛",
+    "cream-dusk": "크림 노을",
+    "emerald-night": "에메랄드 밤",
   };
-  return value ? labels[value] ?? value : "Unassigned";
+  return value ? labels[value] ?? value : "미정";
 }
 
 export function coverThemeClasses(value: string | null | undefined) {

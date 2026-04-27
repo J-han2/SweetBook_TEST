@@ -10,7 +10,6 @@ class DreamEntrySummaryRead(ORMModel):
     id: int
     title: str
     dream_date: date
-    memo: str | None
     created_at: datetime
     updated_at: datetime
     representative_image_url: str | None
@@ -26,7 +25,6 @@ class DreamEntryDetailRead(ORMModel):
     title: str
     dream_date: date
     content: str
-    memo: str | None
     created_at: datetime
     updated_at: datetime
     representative_image_url: str | None

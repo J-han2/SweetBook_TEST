@@ -101,6 +101,31 @@ cd /mnt/c/Users/<사용자명>/Desktop/ws/SweetBook_TEST
 docker compose up --build
 ```
 
+중요:
+
+- `/mnt/c/...` 경로는 **WSL 리눅스 셸 전용 경로**입니다.
+- PowerShell에서 바로 `cd /mnt/c/...`를 입력하면 동작하지 않습니다.
+- PowerShell에서 시작할 때는 먼저 WSL로 들어간 뒤 위 경로를 사용해야 합니다.
+
+예시:
+
+```powershell
+wsl -d Ubuntu-24.04
+```
+
+그 다음 WSL 셸에서:
+
+```bash
+cd /mnt/c/Users/<사용자명>/Desktop/ws/SweetBook_TEST
+docker compose up --build
+```
+
+PowerShell 한 줄 실행 예시:
+
+```powershell
+wsl -d Ubuntu-24.04 -- sh -lc "cd /mnt/c/Users/<사용자명>/Desktop/ws/SweetBook_TEST && docker compose up --build"
+```
+
 ## 기본 동작
 
 실행 직후 아래 흐름을 로그인 없이 바로 확인할 수 있습니다.
@@ -118,6 +143,8 @@ docker compose up --build
 - Tag 데이터
 - Book Draft 1~2개
 - Order 1~2개
+
+더미 데이터의 제목과 본문은 [SEED_DATA.md](./SEED_DATA.md)에 정리되어 있습니다.
 
 ## 모델 포함 방식
 

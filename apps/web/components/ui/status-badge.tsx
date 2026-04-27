@@ -13,5 +13,5 @@ export function StatusBadge({ status }: { status: BookDraftStatus | OrderStatus 
 
   const label = status === "draft" || status === "finalized" ? bookDraftStatusLabel(status) : orderStatusLabel(status);
 
-  return <span className={`rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] ${styles}`}>{label}</span>;
+  return <span className={`rounded-full px-4 py-2 text-xs font-semibold tracking-[0.08em] ${styles}`}>{label}</span>;
 }

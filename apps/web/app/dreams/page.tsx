@@ -5,6 +5,8 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { DreamCard } from "@/components/dreams/dream-card";
+import { DreamListItem } from "@/components/dreams/dream-list-item";
+import { DreamViewMode, ViewModeToggle } from "@/components/dreams/view-mode-toggle";
 import { CalendarField } from "@/components/ui/calendar-field";
 import { SelectPopover } from "@/components/ui/select-popover";
 import { StatePanel } from "@/components/ui/state-panel";
@@ -16,6 +18,7 @@ export default function DreamsPage() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState("dream_date_desc");
+  const [viewMode, setViewMode] = useState<DreamViewMode>("cards");
   const deferredSearch = useDeferredValue(search);
 
   const dreamsQuery = useQuery({
@@ -43,7 +46,7 @@ export default function DreamsPage() {
   const sortOptions = useMemo(
     () => [
       { value: "dream_date_desc", label: "최신순" },
-      { value: "dream_date_asc", label: "오래된 순" },
+      { value: "dream_date_asc", label: "오래된순" },
     ],
     [],
   );
@@ -55,7 +58,7 @@ export default function DreamsPage() {
           <p className="section-kicker">Archive</p>
           <h1 className="page-title mt-4">Your Archive</h1>
           <p className="page-copy mt-5 max-w-3xl">
-            날짜, 태그, 키워드로 꿈일기를 다시 탐색하고 장면과 감정을 천천히 다시 읽어볼 수 있습니다.
+            키워드, 태그, 날짜로 꿈일기를 찾아보고 지금의 기분에 맞는 방식으로 차분히 읽어보세요.
           </p>
         </div>
 
@@ -64,49 +67,56 @@ export default function DreamsPage() {
             <div className="xl:col-span-2">
               <input
                 className="field-input"
-                placeholder="제목, 본문, 메모에서 꿈을 찾아보세요"
+                placeholder="제목과 본문으로 꿈을 찾아보세요"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
 
             <SelectPopover value={tag} onChange={setTag} options={tagOptions} placeholder="태그" maxVisibleOptions={10} />
-
-            <CalendarField value={dateFrom} onChange={setDateFrom} placeholder="시작 날짜" />
-            <CalendarField value={dateTo} onChange={setDateTo} placeholder="종료 날짜" />
+            <CalendarField value={dateFrom} onChange={setDateFrom} placeholder="시작일" />
+            <CalendarField value={dateTo} onChange={setDateTo} placeholder="종료일" />
           </div>
 
           <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-wrap gap-3">
-              <SelectPopover value={sort} onChange={setSort} options={sortOptions} placeholder="정렬" className="min-w-[170px]" />
-              <Link href="/dreams/new" className="primary-button">
-                새 꿈 기록
-              </Link>
+              <SelectPopover value={sort} onChange={setSort} options={sortOptions} placeholder="정렬" className="min-w-[190px]" />
+              <ViewModeToggle value={viewMode} onChange={setViewMode} />
             </div>
+
+            <Link href="/dreams/new" className="primary-button">
+              새 꿈 기록
+            </Link>
           </div>
         </div>
       </section>
 
       {dreamsQuery.isLoading ? (
-        <StatePanel title="꿈 아카이브를 정리하는 중" description="검색 결과와 대표 이미지를 불러오고 있습니다." />
+        <StatePanel title="아카이브를 불러오는 중" description="꿈 카드와 태그 정보를 정리하고 있어요." />
       ) : dreamsQuery.isError ? (
-        <StatePanel title="아카이브를 불러오지 못했습니다" description="백엔드 실행 상태와 API 주소를 확인해 주세요." />
+        <StatePanel title="아카이브를 불러오지 못했어요" description="백엔드 컨테이너와 API 연결 상태를 확인해 주세요." />
       ) : dreams.length === 0 ? (
         <StatePanel
-          title="조건에 맞는 꿈이 없습니다"
-          description="검색어와 날짜 범위를 바꾸거나, 새 꿈일기를 기록해서 아카이브를 채워 보세요."
+          title="조건에 맞는 꿈이 없어요"
+          description="검색어나 날짜를 바꿔보거나, 새로운 꿈을 기록해 아카이브를 채워보세요."
           action={
             <Link href="/dreams/new" className="primary-button">
-              새 꿈일기 쓰기
+              꿈 기록하기
             </Link>
           }
         />
-      ) : (
+      ) : viewMode === "cards" ? (
         <section className="columns-1 [column-gap:2rem] md:columns-2 xl:columns-3">
           {dreams.map((dream) => (
             <div key={dream.id} className="mb-8 break-inside-avoid">
               <DreamCard dream={dream} />
             </div>
+          ))}
+        </section>
+      ) : (
+        <section className="space-y-5">
+          {dreams.map((dream) => (
+            <DreamListItem key={dream.id} dream={dream} />
           ))}
         </section>
       )}

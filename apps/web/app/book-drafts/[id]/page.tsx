@@ -12,10 +12,10 @@ import { api } from "@/lib/api";
 import { coverThemeClasses, formatDate, resolveMediaUrl, themeLabel } from "@/lib/utils";
 
 const coverThemes = [
-  { value: "midnight-blue", label: "Cloudscape" },
-  { value: "starlit-plum", label: "Velvet Night" },
-  { value: "cream-dusk", label: "Dawn Mist" },
-  { value: "emerald-night", label: "Emerald Moss" },
+  { value: "midnight-blue", label: "한밤의 푸른빛" },
+  { value: "starlit-plum", label: "별빛 자두빛" },
+  { value: "cream-dusk", label: "크림 노을" },
+  { value: "emerald-night", label: "에메랄드 밤" },
 ];
 
 export default function BookDraftDetailPage() {
@@ -86,11 +86,11 @@ export default function BookDraftDetailPage() {
   });
 
   if (draftQuery.isLoading) {
-    return <StatePanel title="책 초안을 불러오는 중" description="표지 정보와 포함된 꿈일기 순서를 정리하고 있습니다." />;
+    return <StatePanel title="책 초안을 불러오는 중" description="표지와 순서 정보를 준비하고 있어요." />;
   }
 
   if (draftQuery.isError || !draftQuery.data) {
-    return <StatePanel title="책 초안을 찾을 수 없습니다" description="삭제된 초안이거나 잘못된 주소일 수 있습니다." />;
+    return <StatePanel title="책 초안을 찾을 수 없어요" description="삭제되었거나 잘못된 주소일 수 있어요." />;
   }
 
   const draft = draftQuery.data;
@@ -104,28 +104,28 @@ export default function BookDraftDetailPage() {
             <div className="rounded-[28px] border border-white/60 bg-white/36 p-8 backdrop-blur">
               <div className="flex flex-wrap items-center gap-3">
                 <StatusBadge status={draft.status} />
-                <span className="rounded-full bg-white/70 px-4 py-2 text-sm text-[var(--muted-strong)]">{draft.items.length} entries</span>
+                <span className="rounded-full bg-white/70 px-4 py-2 text-sm text-[var(--muted-strong)]">{draft.items.length}개의 꿈</span>
               </div>
               <p className="section-kicker mt-6">{formatDate(draft.updated_at)}</p>
               <h1 className="mt-4 font-display text-5xl leading-tight text-[var(--accent-strong)]">{draft.title}</h1>
-              <p className="mt-4 text-base italic text-[var(--muted-strong)]">{draft.subtitle || "부제가 아직 없습니다."}</p>
+              <p className="mt-4 text-base italic text-[var(--muted-strong)]">{draft.subtitle || "부제가 아직 없어요."}</p>
               <p className="mt-6 max-w-2xl text-sm leading-7 text-[var(--muted-strong)]">
-                이 초안은 꿈일기 콘텐츠를 큐레이션하는 중간 단계입니다. Finalize 전까지 표지와 순서를 수정할 수 있고, 이후 주문으로 전환됩니다.
+                이곳에서 책 제목과 표지, 순서를 편하게 다듬어보세요. 준비가 끝나면 초안을 확정하고 주문으로 이어갈 수 있어요.
               </p>
             </div>
 
             <div className="rounded-[28px] border border-white/60 bg-white/40 p-8 backdrop-blur">
               <div className="space-y-5">
                 <div>
-                  <label className="field-label">Book Title</label>
+                  <label className="field-label">책 제목</label>
                   <input className="field-input" value={title} onChange={(event) => setTitle(event.target.value)} disabled={draft.status === "finalized"} />
                 </div>
                 <div>
-                  <label className="field-label">Subtitle</label>
+                  <label className="field-label">부제</label>
                   <input className="field-input" value={subtitle} onChange={(event) => setSubtitle(event.target.value)} disabled={draft.status === "finalized"} />
                 </div>
                 <div>
-                  <label className="field-label">Cover Phrase</label>
+                  <label className="field-label">표지 문구</label>
                   <textarea
                     className="field-input min-h-[120px] resize-none"
                     value={coverPhrase}
@@ -134,7 +134,7 @@ export default function BookDraftDetailPage() {
                   />
                 </div>
                 <div>
-                  <label className="field-label">Cover Theme</label>
+                  <label className="field-label">표지 테마</label>
                   <select className="field-input" value={coverTheme} onChange={(event) => setCoverTheme(event.target.value)} disabled={draft.status === "finalized"}>
                     {coverThemes.map((theme) => (
                       <option key={theme.value} value={theme.value}>
@@ -153,7 +153,7 @@ export default function BookDraftDetailPage() {
       <div className="grid gap-8 xl:grid-cols-[0.86fr_1.14fr]">
         <section className="glass-card p-8">
           <p className="section-kicker">Draft Actions</p>
-          <h2 className="mt-3 font-display text-3xl text-[var(--accent-strong)]">큐레이션 상태 관리</h2>
+          <h2 className="mt-3 font-display text-3xl text-[var(--accent-strong)]">Keep Shaping the Book</h2>
 
           {localError ? <div className="mt-6 rounded-[24px] bg-[rgba(245,215,223,0.84)] p-5 text-sm text-[#8f4854]">{localError}</div> : null}
 
@@ -161,18 +161,18 @@ export default function BookDraftDetailPage() {
             {draft.status === "draft" ? (
               <>
                 <button className="primary-button w-full" onClick={() => updateMutation.mutate()} disabled={updateMutation.isPending}>
-                  메타데이터 저장
+                  정보 저장
                 </button>
                 <button className="secondary-button w-full" onClick={() => reorderMutation.mutate(itemIds)} disabled={reorderMutation.isPending}>
                   현재 순서 저장
                 </button>
                 <button className="secondary-button w-full" onClick={() => finalizeMutation.mutate()} disabled={finalizeMutation.isPending}>
-                  Finalize 하기
+                  초안 확정하기
                 </button>
               </>
             ) : (
               <>
-                <label className="field-label">Order Quantity</label>
+                <label className="field-label">주문 수량</label>
                 <input
                   className="field-input"
                   type="number"
@@ -182,10 +182,10 @@ export default function BookDraftDetailPage() {
                   onChange={(event) => setQuantity(Number(event.target.value))}
                 />
                 <button className="primary-button w-full" onClick={() => createOrderMutation.mutate()} disabled={createOrderMutation.isPending}>
-                  주문 생성
+                  주문 만들기
                 </button>
                 <Link href="/orders" className="secondary-button w-full">
-                  주문 목록 보기
+                  내 책장 보기
                 </Link>
               </>
             )}
@@ -195,15 +195,15 @@ export default function BookDraftDetailPage() {
         <section className="space-y-5">
           <div className="flex items-end justify-between gap-6 px-1">
             <div>
-              <p className="section-kicker">Selected Entries</p>
-              <h2 className="mt-3 font-display text-4xl text-[var(--accent-strong)]">책에 담긴 순서</h2>
+              <p className="section-kicker">Selected Dreams</p>
+              <h2 className="mt-3 font-display text-4xl text-[var(--accent-strong)]">Reading Order</h2>
             </div>
           </div>
 
           {draft.items.map((item, index) => (
             <article key={item.id} className="glass-card flex flex-col gap-5 p-6 md:flex-row md:items-center">
               <div className="text-sm text-[var(--muted)] md:w-[110px]">
-                <p className="font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">Scene {String(index + 1).padStart(2, "0")}</p>
+                <p className="font-semibold tracking-[0.18em] text-[var(--accent-strong)]">장면 {String(index + 1).padStart(2, "0")}</p>
                 <p className="mt-2 italic">{formatDate(item.dream_entry.dream_date)}</p>
               </div>
 
@@ -217,7 +217,7 @@ export default function BookDraftDetailPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <h3 className="font-display text-2xl text-[var(--accent-strong)]">{item.dream_entry.title}</h3>
                     <Link href={`/dreams/${item.dream_entry.id}`} className="text-sm font-semibold text-[var(--accent-strong)] hover:underline">
-                      원문 보기
+                      꿈 보기
                     </Link>
                   </div>
                   <p className="mt-2 text-sm leading-7 text-[var(--muted)]">{item.dream_entry.content_preview}</p>
@@ -241,7 +241,7 @@ export default function BookDraftDetailPage() {
                       reorderMutation.mutate(next);
                     }}
                   >
-                    Up
+                    위로
                   </button>
                   <button
                     type="button"
@@ -253,7 +253,7 @@ export default function BookDraftDetailPage() {
                       reorderMutation.mutate(next);
                     }}
                   >
-                    Down
+                    아래로
                   </button>
                 </div>
               ) : null}

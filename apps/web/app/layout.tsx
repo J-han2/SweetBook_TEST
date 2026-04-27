@@ -8,7 +8,7 @@ import { QueryProvider } from "@/components/providers/query-provider";
 
 export const metadata: Metadata = {
   title: "DreamArchive",
-  description: "꿈을 기록하고 탐색하며, 책 초안과 주문까지 연결하는 꿈일기 콘텐츠 서비스",
+  description: "꿈을 기록하고 다시 읽으며, 마음에 남는 장면을 책으로 엮어볼 수 있는 꿈일기 서비스",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

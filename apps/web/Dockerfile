@@ -11,10 +11,7 @@ RUN npm install
 COPY . .
 
 RUN npm run build
-RUN mkdir -p .next/standalone/.next
-RUN cp -R .next/static .next/standalone/.next/static
-RUN cp -R public .next/standalone/public
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start", "--", "--hostname", "0.0.0.0", "--port", "3000"]

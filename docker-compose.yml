@@ -10,6 +10,9 @@ services:
       LLM_CHAT_FORMAT: ${LLM_CHAT_FORMAT:-chatml}
       LLM_N_CTX: ${LLM_N_CTX:-2048}
     volumes:
+      - ./apps/api/app:/app/app
+      - ./apps/api/alembic:/app/alembic
+      - ./apps/api/alembic.ini:/app/alembic.ini
       - ./apps/api/data:/app/data
       - ./apps/api/storage:/app/storage
     ports:
@@ -31,6 +34,17 @@ services:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    volumes:
+      - ./apps/web/app:/app/app
+      - ./apps/web/components:/app/components
+      - ./apps/web/lib:/app/lib
+      - ./apps/web/public:/app/public
+      - ./apps/web/package.json:/app/package.json
+      - ./apps/web/next-env.d.ts:/app/next-env.d.ts
+      - ./apps/web/next.config.mjs:/app/next.config.mjs
+      - ./apps/web/postcss.config.js:/app/postcss.config.js
+      - ./apps/web/tailwind.config.ts:/app/tailwind.config.ts
+      - ./apps/web/tsconfig.json:/app/tsconfig.json
     depends_on:
       api:
         condition: service_healthy
@@ -39,6 +53,7 @@ services:
       echo 'waiting for api';
       sleep 2;
       done &&
-      HOSTNAME=0.0.0.0 PORT=3000 node .next/standalone/server.js"
+      npm run build &&
+      npm run start -- --hostname 0.0.0.0 --port 3000"
     ports:
       - "${WEB_PORT:-3000}:3000"

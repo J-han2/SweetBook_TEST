@@ -29,7 +29,6 @@ def build_order_export(order: Order) -> dict:
                 "title": item.dream_entry.title,
                 "dreamDate": item.dream_entry.dream_date.isoformat(),
                 "content": item.dream_entry.content,
-                "memo": item.dream_entry.memo,
                 "representativeImageUrl": item.dream_entry.representative_image_url,
                 "uploadedImageUrl": item.dream_entry.uploaded_image_url,
                 "moodSummary": item.dream_entry.mood_summary,

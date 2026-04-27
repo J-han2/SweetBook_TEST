@@ -16,7 +16,6 @@ export interface DreamEntrySummary {
   id: number;
   title: string;
   dream_date: string;
-  memo: string | null;
   created_at: string;
   updated_at: string;
   representative_image_url: string | null;
@@ -97,7 +96,6 @@ export interface OrderExportPayload {
     title: string;
     dreamDate: string;
     content: string;
-    memo: string | null;
     representativeImageUrl: string | null;
     uploadedImageUrl: string | null;
     moodSummary: string | null;

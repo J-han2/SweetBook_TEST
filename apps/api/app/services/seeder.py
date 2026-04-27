@@ -33,7 +33,6 @@ def seed_database(session: Session) -> None:
             title=dream["title"],
             dream_date=date.fromisoformat(dream["dream_date"]),
             content=dream["content"],
-            memo=dream["memo"],
             uploaded_image_url=uploaded_image_url,
             representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
             mood_summary=build_mood_summary(tag_names),
