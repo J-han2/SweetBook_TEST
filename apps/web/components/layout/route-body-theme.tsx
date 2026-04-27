@@ -9,6 +9,10 @@ export function RouteBodyTheme() {
   useEffect(() => {
     const routeTheme = pathname === "/" ? "home" : "default";
     document.body.dataset.routeTheme = routeTheme;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
     return () => {
       delete document.body.dataset.routeTheme;

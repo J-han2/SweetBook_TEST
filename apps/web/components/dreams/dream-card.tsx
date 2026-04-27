@@ -62,7 +62,7 @@ export function DreamCard({
               onKeyDown={(event) => event.stopPropagation()}
               className={`absolute right-4 top-4 z-10 rounded-full px-4 py-2 text-xs font-semibold transition ${
                 selected
-                  ? "bg-[linear-gradient(135deg,#6c618a_0%,#7e73a0_48%,#9389b7_100%)] text-white"
+                  ? "bg-[linear-gradient(135deg,#7b63b6_0%,#a183d8_48%,#efb9df_100%)] text-white"
                   : "border border-white/80 bg-white/72 text-[var(--accent-strong)]"
               }`}
             >
