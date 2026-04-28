@@ -6,10 +6,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.constants import TAG_CATALOG
-from app.core.enums import BookDraftStatus, OrderStatus
+from app.core.enums import BookDraftStatus, ExportStatus, OrderStatus
 from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.order import Order
+from app.models.order_history import OrderStatusHistory
 from app.models.tag import Tag
 from app.services.content_enrichment import pick_representative_image
 from app.services.seed_data import SEED_BOOK_DRAFTS, SEED_DREAMS, SEED_ORDERS
@@ -75,8 +76,22 @@ def seed_database(session: Session) -> None:
             shipping_address=order_seed.get("shipping_address"),
             shipping_address_detail=order_seed.get("shipping_address_detail"),
             export_version="1.0",
+            export_status=ExportStatus(order_seed.get("export_status", "pending")),
+            export_error=order_seed.get("export_error"),
+            admin_memo=order_seed.get("admin_memo"),
         )
         session.add(order)
+        session.flush()
+
+        if order.status != OrderStatus.PENDING:
+            session.add(
+                OrderStatusHistory(
+                    order_id=order.id,
+                    from_status=OrderStatus.PENDING.value,
+                    to_status=order.status.value,
+                    note="seed",
+                )
+            )
 
     session.commit()
 

@@ -26,7 +26,7 @@ from app.schemas.admin import (
     BulkStatusChangeRequest,
     BulkStatusChangeResult,
 )
-from app.services.exporter import build_order_export
+from app.services.exporter import build_order_export_archive
 from app.services.presenters import serialize_book_draft
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -266,7 +266,7 @@ def bulk_export(
             session.add(order)
             session.flush()
 
-            build_order_export(order)  # validate exportable
+            build_order_export_archive(order)  # validate exportable archive
 
             order.export_status = ExportStatus.COMPLETED
             order.export_error = None
@@ -274,7 +274,7 @@ def bulk_export(
             download_urls.append({
                 "order_id": order_id,
                 "url": f"/api/orders/{order_id}/export",
-                "filename": f"dreamarchive-order-{order_id}.json",
+                "filename": f"dreamarchive-order-{order_id}.zip",
             })
             successes += 1
         except Exception as exc:
@@ -309,7 +309,7 @@ def retry_export(
         session.add(order)
         session.flush()
 
-        build_order_export(order)
+        build_order_export_archive(order)
 
         order.export_status = ExportStatus.COMPLETED
         order.export_error = None
@@ -371,5 +371,4 @@ def get_stats(session: Annotated[Session, Depends(get_session)]) -> AdminStats:
         popular_tags=popular_tags,
         total_dreams=total_dreams,
     )
-
 

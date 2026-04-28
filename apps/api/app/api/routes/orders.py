@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.orm import Session, selectinload
 
@@ -13,7 +13,7 @@ from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.order import Order
 from app.schemas.order import OrderConfirmRequest, OrderCreateRequest, OrderListResponse, OrderRead, OrderUpdateRequest
-from app.services.exporter import build_order_export
+from app.services.exporter import build_order_export_archive
 from app.services.presenters import serialize_order
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
@@ -129,12 +129,13 @@ def cancel_order(order_id: int, session: Annotated[Session, Depends(get_session)
 
 
 @router.get("/{order_id}/export")
-def export_order(order_id: int, session: Annotated[Session, Depends(get_session)]) -> JSONResponse:
+def export_order(order_id: int, session: Annotated[Session, Depends(get_session)]) -> Response:
     order = _get_order_or_404(session, order_id)
-    payload = build_order_export(order)
-    return JSONResponse(
-        content=payload,
-        headers={"Content-Disposition": f'attachment; filename="dreamarchive-order-{order_id}.json"'},
+    archive = build_order_export_archive(order)
+    return Response(
+        content=archive,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="dreamarchive-order-{order_id}.zip"'},
     )
 
 
