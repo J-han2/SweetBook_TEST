@@ -48,6 +48,7 @@ export default function OrderDetailPage() {
   const [shippingAddress, setShippingAddress] = useState("");
   const [shippingAddressDetail, setShippingAddressDetail] = useState("");
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [showDialog, setShowDialog] = useState(false);
 
   useEffect(() => {
     if (!orderQuery.data) {
@@ -67,6 +68,21 @@ export default function OrderDetailPage() {
     await queryClient.invalidateQueries({ queryKey: ["order", orderId] });
   };
 
+  const order = orderQuery.data ?? null;
+
+  const orderSummary = useMemo(
+    () =>
+      order
+        ? [
+            { label: "주문일", value: formatDate(order.created_at) },
+            { label: "수량", value: `${order.quantity}권` },
+            { label: "담긴 꿈", value: `${order.book_draft.items.length}개` },
+            { label: "마지막 변경", value: formatDate(order.updated_at) },
+          ]
+        : [],
+    [order],
+  );
+
   const confirmMutation = useMutation({
     mutationFn: () =>
       api.confirmOrder(orderId, {
@@ -78,6 +94,7 @@ export default function OrderDetailPage() {
       }),
     onSuccess: async () => {
       setValidationError(null);
+      setShowDialog(false);
       await refreshOrder();
     },
   });
@@ -96,30 +113,14 @@ export default function OrderDetailPage() {
     return <StatePanel title="주문 정보를 불러오는 중이에요" description="책 정보와 주문 상태를 준비하고 있어요." />;
   }
 
-  if (orderQuery.isError || !orderQuery.data) {
+  if (orderQuery.isError) {
     return <StatePanel title="주문을 찾을 수 없어요" description="이미 삭제되었거나 잘못된 주소로 접근한 것 같아요." />;
   }
 
-  const order = orderQuery.data;
-  const isPendingOrder = order.status === "pending";
+  if (!order) {
+    return <StatePanel title="주문을 찾을 수 없어요" description="이미 삭제되었거나 잘못된 주소로 접근한 것 같아요." />;
+  }
 
-  const orderSummary = useMemo(
-    () => [
-      { label: "주문일", value: formatDate(order.created_at) },
-      { label: "수량", value: `${order.quantity}권` },
-      { label: "담긴 꿈", value: `${order.book_draft.items.length}개` },
-      { label: "마지막 변경", value: formatDate(order.updated_at) },
-    ],
-    [order],
-  );
-
-  const mutationError =
-    (confirmMutation.error as Error | null)?.message ??
-    (receiveMutation.error as Error | null)?.message ??
-    (cancelMutation.error as Error | null)?.message ??
-    null;
-
-  const actionError = validationError ?? mutationError;
 
   const handleConfirmOrder = () => {
     const trimmedName = recipientName.trim();
@@ -185,72 +186,14 @@ export default function OrderDetailPage() {
               ))}
             </dl>
 
-            {isPendingOrder ? (
-              <div className="mt-8 rounded-[28px] border border-[rgba(122,97,146,0.12)] bg-[rgba(255,255,255,0.64)] p-6">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="field-label">수량</label>
-                    <input
-                      className="field-input"
-                      type="number"
-                      min={1}
-                      max={99}
-                      value={quantity}
-                      onChange={(event) => setQuantity(Number(event.target.value))}
-                    />
-                  </div>
-                  <div>
-                    <label className="field-label">수령인 이름</label>
-                    <input className="field-input" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} />
-                  </div>
-                  <div>
-                    <label className="field-label">전화번호</label>
-                    <input className="field-input" value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} />
-                  </div>
-                  <div>
-                    <label className="field-label">배송지</label>
-                    <input className="field-input" value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} />
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="field-label">상세 주소</label>
-                    <input
-                      className="field-input"
-                      value={shippingAddressDetail}
-                      onChange={(event) => setShippingAddressDetail(event.target.value)}
-                      placeholder="상세 주소가 있다면 함께 적어주세요"
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-8 grid gap-5 rounded-[28px] border border-[rgba(122,97,146,0.12)] bg-[rgba(255,255,255,0.64)] p-6 sm:grid-cols-2">
-                <div>
-                  <dt className="text-xs font-semibold tracking-[0.14em] text-[var(--muted)]">수령인 이름</dt>
-                  <dd className="mt-2 text-[1.02rem] text-[var(--muted-strong)]">{order.recipient_name ?? "입력 전"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold tracking-[0.14em] text-[var(--muted)]">전화번호</dt>
-                  <dd className="mt-2 text-[1.02rem] text-[var(--muted-strong)]">{order.recipient_phone ?? "입력 전"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold tracking-[0.14em] text-[var(--muted)]">배송지</dt>
-                  <dd className="mt-2 text-[1.02rem] text-[var(--muted-strong)]">{order.shipping_address ?? "입력 전"}</dd>
-                </div>
-                <div>
-                  <dt className="text-xs font-semibold tracking-[0.14em] text-[var(--muted)]">상세 주소</dt>
-                  <dd className="mt-2 text-[1.02rem] text-[var(--muted-strong)]">{order.shipping_address_detail ?? "-"}</dd>
-                </div>
-              </div>
-            )}
-
             <div className="mt-9 flex flex-wrap items-center gap-3">
               {order.status === "pending" ? (
                 <button
                   className={primaryActionClassName(order.status)}
-                  onClick={handleConfirmOrder}
+                  onClick={() => setShowDialog(true)}
                   disabled={confirmMutation.isPending}
                 >
-                  {confirmMutation.isPending ? "주문 중..." : "주문하기"}
+                  주문하기
                 </button>
               ) : order.status === "confirmed" ? (
                 <Link href={`/book-drafts/${order.book_draft.id}?orderId=${order.id}`} className={primaryActionClassName(order.status)}>
@@ -273,12 +216,99 @@ export default function OrderDetailPage() {
               ) : null}
             </div>
 
-            {actionError ? (
-              <div className="mt-5 rounded-[24px] bg-[rgba(245,215,223,0.84)] p-5 text-sm text-[#8f4854]">{actionError}</div>
+            {(receiveMutation.error as Error | null)?.message || (cancelMutation.error as Error | null)?.message ? (
+              <div className="mt-5 rounded-[24px] bg-[rgba(245,215,223,0.84)] p-5 text-sm text-[#8f4854]">
+                {(receiveMutation.error as Error | null)?.message ?? (cancelMutation.error as Error | null)?.message}
+              </div>
             ) : null}
           </div>
         </div>
       </section>
+
+      {/* Order confirm dialog */}
+      {showDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4 backdrop-blur-sm">
+          <div className="glass-card w-full max-w-lg p-8">
+            <h2 className="font-display text-2xl text-[var(--accent-strong)]">주문 정보 입력</h2>
+            <p className="mt-2 text-sm text-[var(--muted)]">수령인 정보를 입력하고 주문을 확정하세요.</p>
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              <div>
+                <label className="field-label">수량</label>
+                <input
+                  className="field-input mt-1"
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                />
+              </div>
+              <div>
+                <label className="field-label">수령인 이름</label>
+                <input
+                  className="field-input mt-1"
+                  placeholder="홍길동"
+                  value={recipientName}
+                  onChange={(e) => setRecipientName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">전화번호</label>
+                <input
+                  className="field-input mt-1"
+                  placeholder="010-0000-0000"
+                  value={recipientPhone}
+                  onChange={(e) => setRecipientPhone(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="field-label">배송지</label>
+                <input
+                  className="field-input mt-1"
+                  placeholder="서울시 강남구 테헤란로 123"
+                  value={shippingAddress}
+                  onChange={(e) => setShippingAddress(e.target.value)}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <label className="field-label">상세 주소 (선택)</label>
+                <input
+                  className="field-input mt-1"
+                  placeholder="동/호수 등"
+                  value={shippingAddressDetail}
+                  onChange={(e) => setShippingAddressDetail(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {validationError && (
+              <div className="mt-4 rounded-[18px] bg-[rgba(245,215,223,0.84)] px-4 py-3 text-sm text-[#8f4854]">
+                {validationError}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => { setShowDialog(false); setValidationError(null); }}
+                disabled={confirmMutation.isPending}
+              >
+                취소
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={handleConfirmOrder}
+                disabled={confirmMutation.isPending}
+              >
+                {confirmMutation.isPending ? "주문 중..." : "주문 확정"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <section className="space-y-5">
         <div>

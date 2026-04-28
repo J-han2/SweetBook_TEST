@@ -1,6 +1,7 @@
 export type TagCategory = "emotion" | "event" | "symbol" | "relation" | "custom";
 export type BookDraftStatus = "draft" | "finalized";
 export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "received" | "cancelled";
+export type ExportStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface Tag {
   id: number;
@@ -112,6 +113,62 @@ export interface OrderExportPayload {
     uploadedImageUrl: string | null;
     tags: string[];
   }>;
+}
+
+// Admin types
+export interface OrderStatusHistory {
+  id: number;
+  order_id: number;
+  from_status: string | null;
+  to_status: string;
+  note: string | null;
+  changed_at: string;
+}
+
+export interface AdminOrder extends Order {
+  export_status: ExportStatus;
+  export_error: string | null;
+  admin_memo: string | null;
+  status_history: OrderStatusHistory[];
+}
+
+export interface AdminOrderListResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+  items: AdminOrder[];
+}
+
+export interface AdminStats {
+  total_orders: number;
+  pending_orders: number;
+  confirmed_orders: number;
+  processing_orders: number;
+  shipped_orders: number;
+  received_orders: number;
+  cancelled_orders: number;
+  export_pending: number;
+  export_processing: number;
+  export_completed: number;
+  export_failed: number;
+  popular_tags: Array<{ name: string; category: string; usage_count: number }>;
+  total_dreams: number;
+}
+
+export interface BulkStatusChangeResult {
+  success_count: number;
+  failure_count: number;
+  failures: Array<{ order_id: number; reason: string }>;
+}
+
+export interface BulkExportResult {
+  success_count: number;
+  failure_count: number;
+  failures: Array<{ order_id: number; reason: string }>;
+  download_urls: Array<{ order_id: number; url: string; filename: string }>;
 }
 
 export interface TaggerStatus {

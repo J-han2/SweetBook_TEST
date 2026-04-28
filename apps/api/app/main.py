@@ -8,7 +8,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from app.api.routes import ai, book_drafts, dream_entries, orders, tags
+from app.api.routes import admin, ai, book_drafts, dream_entries, orders, tags
+from app.models import order_history  # noqa: F401 — ensures table is registered with Base
 from app.core.config import get_settings
 from app.core.database import SessionLocal
 from app.services.media import ensure_storage_dirs
@@ -48,6 +49,7 @@ app.include_router(tags.router, prefix=settings.api_prefix)
 app.include_router(ai.router, prefix=settings.api_prefix)
 app.include_router(book_drafts.router, prefix=settings.api_prefix)
 app.include_router(orders.router, prefix=settings.api_prefix)
+app.include_router(admin.router, prefix=settings.api_prefix)
 
 
 @app.get("/")

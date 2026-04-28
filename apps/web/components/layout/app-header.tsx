@@ -32,6 +32,11 @@ function isActiveLink(pathname: string, href: string) {
 
 export function AppHeader() {
   const pathname = usePathname();
+  const isAdmin = pathname.startsWith("/admin");
+
+  if (isAdmin) {
+    return null;
+  }
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/55 bg-white/55 backdrop-blur-xl">

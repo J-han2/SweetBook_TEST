@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 export function AppFooter() {
   const pathname = usePathname();
   const isHome = pathname === "/";
+  const isAdmin = pathname.startsWith("/admin");
 
-  if (isHome) {
+  if (isHome || isAdmin) {
     return null;
   }
 

@@ -70,6 +70,12 @@ export default function OrdersPage() {
     <div className="space-y-12">
       <section className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <div>
+          <Link href="/admin" className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-[rgba(122,97,146,0.18)] bg-white/60 px-3 py-1.5 text-xs font-semibold text-[var(--muted-strong)] transition hover:bg-white/90">
+            <svg viewBox="0 0 16 16" className="h-3.5 w-3.5" fill="currentColor">
+              <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 2a5 5 0 110 10A5 5 0 018 3zm0 2a1 1 0 100 2 1 1 0 000-2zm-1 4h2v3H7V9z"/>
+            </svg>
+            관리자 페이지로 이동
+          </Link>
           <h1 className="page-title">Make your own book</h1>
           <p className="page-copy mt-5 max-w-3xl">
             좋아하는 장면을 모아 나만의 책을 만들어 보세요. 내가 주문한 책을 확인할 수 있어요.

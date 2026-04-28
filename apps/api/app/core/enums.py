@@ -21,3 +21,10 @@ class OrderStatus(str, Enum):
     SHIPPED = "shipped"
     RECEIVED = "received"
     CANCELLED = "cancelled"
+
+
+class ExportStatus(str, Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    COMPLETED = "completed"
+    FAILED = "failed"

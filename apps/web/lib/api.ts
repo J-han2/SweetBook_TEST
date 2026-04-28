@@ -1,10 +1,16 @@
 import {
+  AdminOrder,
+  AdminOrderListResponse,
+  AdminStats,
   BookDraft,
   BookDraftListResponse,
+  BulkExportResult,
+  BulkStatusChangeResult,
   DreamEntryDetail,
   DreamEntryListResponse,
   Order,
   OrderListResponse,
+  OrderStatus,
   PopularTag,
   Tag,
   TagPreviewResult,
@@ -237,5 +243,51 @@ export const api = {
   },
   exportOrderUrl(id: number) {
     return `${API_BASE_URL}/api/orders/${id}/export`;
+  },
+
+  // Admin APIs
+  adminListOrders(params: {
+    status?: OrderStatus[];
+    q?: string;
+    date_from?: string;
+    date_to?: string;
+    sort?: string;
+    page?: number;
+    page_size?: number;
+  }) {
+    return request<AdminOrderListResponse>(`/api/admin/orders${buildQuery(params)}`);
+  },
+  adminGetOrder(id: number) {
+    return request<AdminOrder>(`/api/admin/orders/${id}`);
+  },
+  adminBulkStatus(order_ids: number[], to_status: OrderStatus, note?: string) {
+    return request<BulkStatusChangeResult>("/api/admin/orders/bulk-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_ids, to_status, note }),
+    });
+  },
+  adminBulkExport(order_ids: number[]) {
+    return request<BulkExportResult>("/api/admin/orders/bulk-export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_ids }),
+    });
+  },
+  adminRetryExport(id: number) {
+    return request<AdminOrder>(`/api/admin/orders/${id}/retry-export`, { method: "POST" });
+  },
+  adminUpdateMemo(id: number, memo: string | null) {
+    return request<AdminOrder>(`/api/admin/orders/${id}/memo`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memo }),
+    });
+  },
+  adminGetStats() {
+    return request<AdminStats>("/api/admin/stats");
+  },
+  adminCsvUrl(params: { status?: OrderStatus[]; q?: string; date_from?: string; date_to?: string }) {
+    return `${API_BASE_URL}/api/admin/orders/export/csv${buildQuery(params)}`;
   },
 };
