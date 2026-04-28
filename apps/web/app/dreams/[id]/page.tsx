@@ -21,7 +21,17 @@ function DreamContentPlaceholder() {
   return <div className="min-h-[72vh]" />;
 }
 
-function DreamContent({ dream, isLeaving }: { dream: DreamEntryDetail; isLeaving: boolean }) {
+function DreamContent({
+  dream,
+  isLeaving,
+  returnIds,
+  isAddMode,
+}: {
+  dream: DreamEntryDetail;
+  isLeaving: boolean;
+  returnIds: string | null;
+  isAddMode: boolean;
+}) {
   const [imgLoaded, setImgLoaded] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -101,23 +111,19 @@ function DreamContent({ dream, isLeaving }: { dream: DreamEntryDetail; isLeaving
           </div>
         </div>
 
-        <article
-          className={`relative overflow-hidden ${imgLoaded ? "glass-card p-8 md:p-10" : "border-transparent bg-transparent p-0"}`}
-        >
+        <article className={`relative overflow-hidden ${imgLoaded ? "glass-card p-8 md:p-10" : "border-transparent bg-transparent p-0"}`}>
           <div className="relative flex min-h-[20rem] flex-col gap-8 md:min-h-[26rem] lg:min-h-[36rem]">
             <header>
               <p className="section-kicker">{formatDate(dream.dream_date)}</p>
-              <h1 className="mt-4 font-display text-4xl leading-tight text-[var(--accent-strong)] md:text-5xl">
-                {dream.title}
-              </h1>
+              <h1 className="mt-4 font-display text-4xl leading-tight text-[var(--accent-strong)] md:text-5xl">{dream.title}</h1>
 
-              {dream.tags.length > 0 && (
+              {dream.tags.length > 0 ? (
                 <div className="mt-6 flex flex-wrap gap-2">
                   {dream.tags.map((tag) => (
                     <TagPill key={tag.id} tag={tag} />
                   ))}
                 </div>
-              )}
+              ) : null}
             </header>
 
             <div className="flex-1 space-y-6 text-base leading-9 text-[var(--muted-strong)]">
@@ -136,8 +142,12 @@ function DreamContent({ dream, isLeaving }: { dream: DreamEntryDetail; isLeaving
               </Link>
               <button
                 type="button"
-                className="danger-button"
+                className="danger-button disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={isAddMode}
                 onClick={() => {
+                  if (isAddMode) {
+                    return;
+                  }
                   if (window.confirm("이 기록을 삭제할까요?")) {
                     deleteMutation.mutate();
                   }
@@ -145,9 +155,17 @@ function DreamContent({ dream, isLeaving }: { dream: DreamEntryDetail; isLeaving
               >
                 삭제
               </button>
-              <Link href={`/book-drafts?ids=${dream.id}`} className="primary-button">
-                책에 담기
-              </Link>
+              {!isAddMode ? (
+                <Link
+                  href={(() => {
+                    const merged = Array.from(new Set([...(returnIds ? returnIds.split(",").map(Number).filter(Boolean) : []), dream.id]));
+                    return `/book-drafts?ids=${merged.join(",")}`;
+                  })()}
+                  className="primary-button"
+                >
+                  책에 담기
+                </Link>
+              ) : null}
             </div>
           </div>
         </article>
@@ -164,8 +182,13 @@ export default function DreamDetailPage() {
   const [isNavigating, setIsNavigating] = useState(false);
   const navigationTimeoutRef = useRef<number | null>(null);
 
+  const returnIds = searchParams.get("returnIds");
+  const addToDraftId = searchParams.get("addToDraft");
+  const addToOrderId = searchParams.get("orderId");
+  const returnToOrderId = searchParams.get("returnToOrder");
+  const isAddMode = !!addToDraftId;
+  const selectedTags = searchParams.getAll("tags");
   const q = searchParams.get("q") ?? undefined;
-  const tag = searchParams.get("tag") ?? undefined;
   const dateFrom = searchParams.get("date_from") ?? undefined;
   const dateTo = searchParams.get("date_to") ?? undefined;
   const sort = searchParams.get("sort") ?? "dream_date_desc";
@@ -174,13 +197,32 @@ export default function DreamDetailPage() {
   const hasExplicitContext =
     searchParams.has("page") ||
     searchParams.has("q") ||
-    searchParams.has("tag") ||
+    searchParams.has("tags") ||
     searchParams.has("date_from") ||
     searchParams.has("date_to") ||
     searchParams.has("sort");
 
   const navigationPage = hasExplicitContext ? contextPage : 1;
   const navigationPageSize = hasExplicitContext ? contextPageSize : DEFAULT_NAV_PAGE_SIZE;
+
+  const backParams = useMemo(() => {
+    const paramsForBack = new URLSearchParams();
+    if (q) paramsForBack.set("q", q);
+    selectedTags.forEach((tag) => paramsForBack.append("tags", tag));
+    if (dateFrom) paramsForBack.set("date_from", dateFrom);
+    if (dateTo) paramsForBack.set("date_to", dateTo);
+    paramsForBack.set("sort", sort);
+    paramsForBack.set("page", String(navigationPage));
+    paramsForBack.set("page_size", String(navigationPageSize));
+    if (addToOrderId) paramsForBack.set("orderId", addToOrderId);
+    return paramsForBack;
+  }, [addToOrderId, dateFrom, dateTo, navigationPage, navigationPageSize, q, selectedTags, sort]);
+
+  const archiveHref = isAddMode
+    ? `/book-drafts/${addToDraftId}/add-dreams${backParams.toString() ? `?${backParams.toString()}` : ""}`
+    : returnToOrderId
+      ? `/orders/${returnToOrderId}`
+      : "/dreams";
 
   const dreamQuery = useQuery({
     queryKey: ["dream", dreamId],
@@ -194,7 +236,7 @@ export default function DreamDetailPage() {
       "dreams-nav",
       {
         q,
-        tag,
+        tags: selectedTags,
         dateFrom,
         dateTo,
         sort,
@@ -205,7 +247,7 @@ export default function DreamDetailPage() {
     queryFn: () =>
       api.listDreamEntries({
         q: q || undefined,
-        tag: tag || undefined,
+        tags: selectedTags.length ? selectedTags : undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         sort,
@@ -221,11 +263,11 @@ export default function DreamDetailPage() {
   const isLastOnPage = currentIndex === items.length - 1 && currentIndex >= 0 && navigationPage < totalPages;
 
   const prevPageQuery = useQuery({
-    queryKey: ["dreams-nav", { q, tag, dateFrom, dateTo, sort, page: navigationPage - 1, pageSize: navigationPageSize }],
+    queryKey: ["dreams-nav", { q, tags: selectedTags, dateFrom, dateTo, sort, page: navigationPage - 1, pageSize: navigationPageSize }],
     queryFn: () =>
       api.listDreamEntries({
         q: q || undefined,
-        tag: tag || undefined,
+        tags: selectedTags.length ? selectedTags : undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         sort,
@@ -236,11 +278,11 @@ export default function DreamDetailPage() {
   });
 
   const nextPageQuery = useQuery({
-    queryKey: ["dreams-nav", { q, tag, dateFrom, dateTo, sort, page: navigationPage + 1, pageSize: navigationPageSize }],
+    queryKey: ["dreams-nav", { q, tags: selectedTags, dateFrom, dateTo, sort, page: navigationPage + 1, pageSize: navigationPageSize }],
     queryFn: () =>
       api.listDreamEntries({
         q: q || undefined,
-        tag: tag || undefined,
+        tags: selectedTags.length ? selectedTags : undefined,
         date_from: dateFrom || undefined,
         date_to: dateTo || undefined,
         sort,
@@ -280,13 +322,17 @@ export default function DreamDetailPage() {
   const baseParams = useMemo(() => {
     const paramsForNav = new URLSearchParams();
     if (q) paramsForNav.set("q", q);
-    if (tag) paramsForNav.set("tag", tag);
+    selectedTags.forEach((tag) => paramsForNav.append("tags", tag));
     if (dateFrom) paramsForNav.set("date_from", dateFrom);
     if (dateTo) paramsForNav.set("date_to", dateTo);
     paramsForNav.set("sort", sort);
     paramsForNav.set("page_size", String(navigationPageSize));
+    if (addToDraftId) paramsForNav.set("addToDraft", addToDraftId);
+    if (addToOrderId) paramsForNav.set("orderId", addToOrderId);
+    if (returnToOrderId) paramsForNav.set("returnToOrder", returnToOrderId);
+    if (returnIds) paramsForNav.set("returnIds", returnIds);
     return paramsForNav;
-  }, [dateFrom, dateTo, navigationPageSize, q, sort, tag]);
+  }, [addToDraftId, addToOrderId, dateFrom, dateTo, navigationPageSize, q, returnIds, returnToOrderId, selectedTags, sort]);
 
   function buildNavUrl(id: number, navPage: number, navDirection: "prev" | "next") {
     const paramsForNav = new URLSearchParams(baseParams);
@@ -342,11 +388,11 @@ export default function DreamDetailPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between gap-4">
-        <Link href="/dreams" className="secondary-button inline-flex items-center gap-2">
+        <Link href={archiveHref} className="secondary-button inline-flex items-center gap-2">
           <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
             <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Archive
+          이전 화면으로
         </Link>
 
         <div className="flex items-center gap-2">
@@ -376,9 +422,9 @@ export default function DreamDetailPage() {
       </div>
 
       {dreamQuery.isError || (!dreamQuery.isLoading && !dream) ? (
-        <StatePanel title="꿈 일기를 찾을 수 없어요" description="이미 삭제되었거나 잘못된 주소로 들어온 것 같아요." />
+        <StatePanel title="꿈 이야기를 찾을 수 없어요" description="이미 삭제했거나 잘못된 주소일 수 있어요." />
       ) : dream ? (
-        <DreamContent key={`${dreamId}-${searchParams.get("nav") ?? "initial"}`} dream={dream} isLeaving={isNavigating} />
+        <DreamContent key={`${dreamId}-${searchParams.get("nav") ?? "initial"}`} dream={dream} isLeaving={isNavigating} returnIds={returnIds} isAddMode={isAddMode} />
       ) : (
         <DreamContentPlaceholder />
       )}

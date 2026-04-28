@@ -325,9 +325,11 @@ export function DreamForm({
               </div>
             ) : null}
 
-            {!previewMutation.isPending && previewTags.length === 0 ? (
+            {!previewMutation.isPending && !previewError && previewTags.length === 0 ? (
               <div className="mt-5 rounded-[20px] border border-dashed border-[rgba(108,95,142,0.16)] bg-white/55 px-4 py-5 text-sm leading-6 text-[var(--muted)]">
-                AI 추천 결과가 이곳에 표시됩니다.
+                {previewMutation.isSuccess
+                  ? "추천할 태그를 찾지 못했어요. 원하는 태그가 있다면 직접 추가해보세요!"
+                  : "AI 추천 결과가 이곳에 표시됩니다."}
               </div>
             ) : null}
           </div>

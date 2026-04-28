@@ -214,6 +214,7 @@ export function BookDraftsClient() {
                   <div key={dream.id} className="mb-8 break-inside-avoid">
                     <DreamCard
                       dream={dream}
+                      href={selectedIds.length ? `/dreams/${dream.id}?returnIds=${selectedIds.join(",")}` : undefined}
                       selectable
                       selected={selectedSet.has(dream.id)}
                       onToggle={(id) => {
@@ -231,6 +232,7 @@ export function BookDraftsClient() {
                   <DreamListItem
                     key={dream.id}
                     dream={dream}
+                    href={selectedIds.length ? `/dreams/${dream.id}?returnIds=${selectedIds.join(",")}` : undefined}
                     selectable
                     selected={selectedSet.has(dream.id)}
                     onToggle={(id) => {

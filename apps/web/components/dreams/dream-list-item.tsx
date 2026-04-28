@@ -12,15 +12,23 @@ export function DreamListItem({
   selectable = false,
   selected = false,
   onToggle,
+  selectionVariant = "default",
 }: {
   dream: DreamEntrySummary;
   href?: string;
   selectable?: boolean;
   selected?: boolean;
   onToggle?: (id: number) => void;
+  selectionVariant?: "default" | "picker";
 }) {
   const router = useRouter();
   const destination = href ?? `/dreams/${dream.id}`;
+  const idleLabel = selectionVariant === "picker" ? "추가하기" : "책에 담기";
+  const selectedLabel = "선택됨";
+  const idleClassName =
+    selectionVariant === "picker"
+      ? "rounded-full border border-[rgba(122,97,146,0.18)] bg-white/92 px-5 py-3 text-sm font-semibold text-[var(--accent-strong)] transition hover:bg-white"
+      : "secondary-button w-full";
 
   return (
     <article
@@ -67,9 +75,9 @@ export function DreamListItem({
               onToggle?.(dream.id);
             }}
             onKeyDown={(event) => event.stopPropagation()}
-            className={selected ? "primary-button w-full" : "secondary-button w-full"}
+            className={selected ? "primary-button w-full" : selectionVariant === "picker" ? idleClassName : "secondary-button w-full"}
           >
-            {selected ? "선택됨" : "책에 담기"}
+            {selected ? selectedLabel : idleLabel}
           </button>
         </div>
       ) : null}

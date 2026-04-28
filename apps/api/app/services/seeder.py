@@ -70,6 +70,10 @@ def seed_database(session: Session) -> None:
             book_draft_id=draft_map[order_seed["book_title"]].id,
             quantity=order_seed["quantity"],
             status=OrderStatus(order_seed["status"]),
+            recipient_name=order_seed.get("recipient_name"),
+            recipient_phone=order_seed.get("recipient_phone"),
+            shipping_address=order_seed.get("shipping_address"),
+            shipping_address_detail=order_seed.get("shipping_address_detail"),
             export_version="1.0",
         )
         session.add(order)

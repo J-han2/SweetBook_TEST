@@ -16,7 +16,7 @@ export function categoryLabel(category: TagCategory) {
     event: "상황",
     symbol: "상징",
     relation: "관계",
-    custom: "사용자",
+    custom: "사용자 태그",
   };
   return labels[category];
 }
@@ -27,10 +27,12 @@ export function bookDraftStatusLabel(status: BookDraftStatus) {
 
 export function orderStatusLabel(status: OrderStatus) {
   const labels: Record<OrderStatus, string> = {
-    pending: "주문 대기",
-    processing: "작업 중",
-    completed: "완료",
-    cancelled: "취소됨",
+    pending: "주문 전",
+    confirmed: "주문 확인 중",
+    processing: "제작 중",
+    shipped: "발송 완료",
+    received: "수령 완료",
+    cancelled: "주문 취소",
   };
   return labels[status];
 }

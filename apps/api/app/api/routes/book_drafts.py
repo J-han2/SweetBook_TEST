@@ -12,6 +12,7 @@ from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.schemas.book_draft import (
     BookDraftCreateRequest,
+    BookDraftItemAddRequest,
     BookDraftListResponse,
     BookDraftRead,
     BookDraftReorderRequest,
@@ -86,7 +87,6 @@ def update_book_draft(
     session: Annotated[Session, Depends(get_session)],
 ) -> BookDraftRead:
     draft = _get_draft_or_404(session, book_draft_id)
-    _ensure_draft_editable(draft)
 
     if payload.title is not None:
         clean_title = payload.title.strip()
@@ -112,7 +112,6 @@ def reorder_book_draft_items(
     session: Annotated[Session, Depends(get_session)],
 ) -> BookDraftRead:
     draft = _get_draft_or_404(session, book_draft_id)
-    _ensure_draft_editable(draft)
 
     existing_ids = [item.id for item in draft.items]
     if sorted(existing_ids) != sorted(payload.ordered_item_ids):
@@ -121,6 +120,54 @@ def reorder_book_draft_items(
     item_map = {item.id: item for item in draft.items}
     for index, item_id in enumerate(payload.ordered_item_ids, start=1):
         item_map[item_id].sort_order = index
+
+    session.commit()
+    return serialize_book_draft(_get_draft_or_404(session, draft.id))
+
+
+@router.post("/{book_draft_id}/items", response_model=BookDraftRead)
+def add_book_draft_item(
+    book_draft_id: int,
+    payload: BookDraftItemAddRequest,
+    session: Annotated[Session, Depends(get_session)],
+) -> BookDraftRead:
+    draft = _get_draft_or_404(session, book_draft_id)
+
+    entry = session.get(DreamEntry, payload.dream_entry_id)
+    if not entry:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="꿈일기를 찾을 수 없습니다.")
+
+    already_in = any(item.dream_entry_id == payload.dream_entry_id for item in draft.items)
+    if already_in:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="이미 책에 담긴 꿈일기입니다.")
+
+    max_order = max((item.sort_order for item in draft.items), default=0)
+    session.add(BookDraftItem(book_draft_id=draft.id, dream_entry_id=payload.dream_entry_id, sort_order=max_order + 1))
+    session.commit()
+    return serialize_book_draft(_get_draft_or_404(session, draft.id))
+
+
+@router.delete("/{book_draft_id}/items/{item_id}", response_model=BookDraftRead)
+def remove_book_draft_item(
+    book_draft_id: int,
+    item_id: int,
+    session: Annotated[Session, Depends(get_session)],
+) -> BookDraftRead:
+    draft = _get_draft_or_404(session, book_draft_id)
+
+    if len(draft.items) <= 1:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="최소 1개의 꿈일기가 있어야 합니다.")
+
+    item = next((i for i in draft.items if i.id == item_id), None)
+    if not item:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="아이템을 찾을 수 없습니다.")
+
+    session.delete(item)
+    session.flush()
+
+    remaining_items = sorted((current for current in draft.items if current.id != item_id), key=lambda current: current.sort_order)
+    for index, current in enumerate(remaining_items, start=1):
+        current.sort_order = index
 
     session.commit()
     return serialize_book_draft(_get_draft_or_404(session, draft.id))

@@ -12,12 +12,14 @@ export function DreamCard({
   selectable = false,
   selected = false,
   onToggle,
+  selectionVariant = "default",
 }: {
   dream: DreamEntrySummary;
   href?: string;
   selectable?: boolean;
   selected?: boolean;
   onToggle?: (id: number) => void;
+  selectionVariant?: "default" | "picker";
 }) {
   const router = useRouter();
   const destination = href ?? `/dreams/${dream.id}`;
@@ -29,6 +31,13 @@ export function DreamCard({
         : "md:-rotate-[0.35deg] md:translate-y-0.5";
   const previewTags = dream.tags.slice(0, 3);
   const remainingTagCount = Math.max(dream.tags.length - previewTags.length, 0);
+
+  const idleLabel = selectionVariant === "picker" ? "추가하기" : "책에 담기";
+  const selectedLabel = "선택됨";
+  const idleClassName =
+    selectionVariant === "picker"
+      ? "border border-[rgba(122,97,146,0.18)] bg-white/92 text-[var(--accent-strong)]"
+      : "border border-white/80 bg-white/72 text-[var(--accent-strong)]";
 
   return (
     <article
@@ -68,10 +77,10 @@ export function DreamCard({
               className={`absolute right-4 top-4 z-10 rounded-full px-4 py-2 text-xs font-semibold transition ${
                 selected
                   ? "bg-[linear-gradient(135deg,#7b63b6_0%,#a183d8_48%,#efb9df_100%)] text-white"
-                  : "border border-white/80 bg-white/72 text-[var(--accent-strong)]"
+                  : idleClassName
               }`}
             >
-              {selected ? "선택됨" : "책에 담기"}
+              {selected ? selectedLabel : idleLabel}
             </button>
           ) : null}
         </div>
@@ -105,7 +114,6 @@ export function DreamCard({
                 </span>
               ) : null}
             </div>
-
           </div>
         </div>
       </div>

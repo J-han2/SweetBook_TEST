@@ -1,6 +1,6 @@
 export type TagCategory = "emotion" | "event" | "symbol" | "relation" | "custom";
 export type BookDraftStatus = "draft" | "finalized";
-export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "received" | "cancelled";
 
 export interface Tag {
   id: number;
@@ -66,6 +66,10 @@ export interface Order {
   id: number;
   status: OrderStatus;
   quantity: number;
+  recipient_name: string | null;
+  recipient_phone: string | null;
+  shipping_address: string | null;
+  shipping_address_detail: string | null;
   export_version: string;
   created_at: string;
   updated_at: string;
@@ -83,6 +87,10 @@ export interface OrderExportPayload {
     id: number;
     status: OrderStatus;
     quantity: number;
+    recipientName: string | null;
+    recipientPhone: string | null;
+    shippingAddress: string | null;
+    shippingAddressDetail: string | null;
     createdAt: string;
     updatedAt: string;
   };

@@ -53,6 +53,7 @@ services:
       echo 'waiting for api';
       sleep 2;
       done &&
+      rm -rf .next &&
       npm run build &&
       npm run start -- --hostname 0.0.0.0 --port 3000"
     ports:
