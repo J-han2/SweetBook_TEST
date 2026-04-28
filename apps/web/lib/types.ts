@@ -20,7 +20,6 @@ export interface DreamEntrySummary {
   updated_at: string;
   representative_image_url: string | null;
   uploaded_image_url: string | null;
-  mood_summary: string | null;
   is_seed: boolean;
   content_preview: string;
   tags: Tag[];
@@ -32,6 +31,11 @@ export interface DreamEntryDetail extends Omit<DreamEntrySummary, "content_previ
 
 export interface DreamEntryListResponse {
   total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
   items: DreamEntrySummary[];
 }
 
@@ -98,7 +102,6 @@ export interface OrderExportPayload {
     content: string;
     representativeImageUrl: string | null;
     uploadedImageUrl: string | null;
-    moodSummary: string | null;
     tags: string[];
   }>;
 }

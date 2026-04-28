@@ -33,11 +33,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-function buildQuery(params: Record<string, string | undefined>) {
+function buildQuery(params: Record<string, string | number | Array<string | number> | undefined>) {
   const query = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      query.set(key, value);
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item !== "") {
+          query.append(key, String(item));
+        }
+      });
+      return;
+    }
+
+    if (value !== undefined && value !== "") {
+      query.set(key, String(value));
     }
   });
   const serialized = query.toString();
@@ -48,9 +57,12 @@ export const api = {
   listDreamEntries(params: {
     q?: string;
     tag?: string;
+    tags?: string[];
     date_from?: string;
     date_to?: string;
     sort?: string;
+    page?: number;
+    page_size?: number;
   }) {
     return request<DreamEntryListResponse>(`/api/dream-entries${buildQuery(params)}`);
   },

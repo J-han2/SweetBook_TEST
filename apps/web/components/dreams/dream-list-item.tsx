@@ -8,26 +8,29 @@ import { formatDate, resolveMediaUrl } from "@/lib/utils";
 
 export function DreamListItem({
   dream,
+  href,
   selectable = false,
   selected = false,
   onToggle,
 }: {
   dream: DreamEntrySummary;
+  href?: string;
   selectable?: boolean;
   selected?: boolean;
   onToggle?: (id: number) => void;
 }) {
   const router = useRouter();
+  const destination = href ?? `/dreams/${dream.id}`;
 
   return (
     <article
       role="link"
       tabIndex={0}
-      onClick={() => router.push(`/dreams/${dream.id}`)}
+      onClick={() => router.push(destination)}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
-          router.push(`/dreams/${dream.id}`);
+          router.push(destination);
         }
       }}
       className="glass-card interactive-card archive-card-frame flex cursor-pointer flex-col gap-5 p-5 transition duration-300 hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline-none md:flex-row md:items-center md:p-6"

@@ -23,7 +23,6 @@ def serialize_entry_summary(entry: DreamEntry) -> DreamEntrySummaryRead:
         updated_at=entry.updated_at,
         representative_image_url=entry.representative_image_url,
         uploaded_image_url=entry.uploaded_image_url,
-        mood_summary=entry.mood_summary,
         is_seed=entry.is_seed,
         content_preview=entry.content_preview,
         tags=[serialize_tag(tag) for tag in sorted(entry.tags, key=lambda item: (item.category.value, item.name))],
@@ -40,7 +39,6 @@ def serialize_entry_detail(entry: DreamEntry) -> DreamEntryDetailRead:
         updated_at=entry.updated_at,
         representative_image_url=entry.representative_image_url,
         uploaded_image_url=entry.uploaded_image_url,
-        mood_summary=entry.mood_summary,
         is_seed=entry.is_seed,
         tags=[serialize_tag(tag) for tag in sorted(entry.tags, key=lambda item: (item.category.value, item.name))],
     )

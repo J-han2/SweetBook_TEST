@@ -6,16 +6,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const stages = [
   {
     title: "꿈 기록하기",
-    copy: "꿈의 장면을 기록해두세요.",
+    copy: "잊기 전에 지난 밤의 장면을 기록해두세요.",
     range: { fadeInStart: 0.18, fadeInEnd: 0.28, holdEnd: 0.44, fadeOutEnd: 0.56 },
   },
   {
     title: "꿈 다시보기",
-    copy: "쌓인 기록 속에서 다시 보고 싶은 순간을 찾아보세요.",
+    copy: "쌓인 기록 속에서 다시 보고 싶은 순간을 꺼내보세요.",
     range: { fadeInStart: 0.4, fadeInEnd: 0.5, holdEnd: 0.66, fadeOutEnd: 0.78 },
   },
   {
-    title: "책으로 만들기",
+    title: "책으로 변환",
     copy: "좋아하는 꿈들을 묶어 한 권의 책으로 이어보세요.",
     range: { fadeInStart: 0.62, fadeInEnd: 0.72, holdEnd: 0.86, fadeOutEnd: 0.94 },
   },
@@ -125,7 +125,7 @@ export function HomeScrollStory() {
             >
               <h1 className="home-intro-title">
                 <span className="home-headline-line">꿈을 잊기전에</span>
-                <span className="home-headline-line home-headline-line-delay mt-5">
+                <span className="home-headline-line home-headline-line-delay mt-3">
                   <span className="inline-block pl-10">기록으로 남기세요</span>
                 </span>
               </h1>
@@ -150,18 +150,20 @@ export function HomeScrollStory() {
 
           <Link
             href="/dreams/new"
-            className="home-story-cta group absolute bottom-12 right-10 text-white md:bottom-16 md:right-16 lg:right-24"
+            className="home-story-cta group absolute bottom-12 right-16 text-white md:bottom-16 md:right-24 lg:right-40 xl:right-52"
             style={{
               opacity: ctaProgress,
               transform: `translate3d(${(1 - ctaProgress) * -22}px, ${(1 - ctaProgress) * 12}px, 0)`,
               pointerEvents: ctaProgress > 0.12 ? "auto" : "none",
             }}
           >
-            <span className="home-story-cta-label home-story-cta-label-float">
-              꿈 기록 시작하기
-              <span className="absolute -bottom-2 left-0 h-px w-full bg-white/76 transition-all duration-300 group-hover:w-[calc(100%+22px)] group-hover:bg-[#ffe7f4]" />
+            <span className="home-story-cta-stack home-story-cta-stack-float">
+              <span className="home-story-cta-label">
+                시작하기
+                <span className="home-story-cta-underline" />
+              </span>
+              <span className="home-story-cta-copy">지난 밤의 꿈을 기록해보세요</span>
             </span>
-            <span className="home-story-cta-copy">지난 밤의 꿈을 기록해 보세요</span>
           </Link>
 
           <div className="home-scroll-arrow" style={{ opacity: arrowOpacity }}>

@@ -31,7 +31,6 @@ def build_order_export(order: Order) -> dict:
                 "content": item.dream_entry.content,
                 "representativeImageUrl": item.dream_entry.representative_image_url,
                 "uploadedImageUrl": item.dream_entry.uploaded_image_url,
-                "moodSummary": item.dream_entry.mood_summary,
                 "tags": [tag.name for tag in sorted(item.dream_entry.tags, key=lambda tag: (tag.category.value, tag.name))],
             }
             for item in items

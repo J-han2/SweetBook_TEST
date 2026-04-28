@@ -11,7 +11,7 @@ from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.order import Order
 from app.models.tag import Tag
-from app.services.content_enrichment import build_mood_summary, pick_representative_image
+from app.services.content_enrichment import pick_representative_image
 from app.services.seed_data import SEED_BOOK_DRAFTS, SEED_DREAMS, SEED_ORDERS
 
 
@@ -35,7 +35,6 @@ def seed_database(session: Session) -> None:
             content=dream["content"],
             uploaded_image_url=uploaded_image_url,
             representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
-            mood_summary=build_mood_summary(tag_names),
             is_seed=True,
         )
         entry.tags = [tag_map[name] for name in tag_names]

@@ -2,10 +2,11 @@ from __future__ import annotations
 
 from datetime import date
 import json
+import math
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_session
@@ -13,7 +14,7 @@ from app.models.book_draft import BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.tag import Tag
 from app.schemas.dream_entry import DreamEntryDeleteResponse, DreamEntryDetailRead, DreamEntryListResponse
-from app.services.content_enrichment import build_mood_summary, pick_representative_image
+from app.services.content_enrichment import pick_representative_image
 from app.services.llm_tagger import TaggerUnavailableError, get_tagger
 from app.services.media import delete_runtime_upload, save_upload
 from app.services.presenters import serialize_entry_detail, serialize_entry_summary
@@ -27,11 +28,18 @@ def list_dream_entries(
     session: Annotated[Session, Depends(get_session)],
     q: str | None = Query(default=None),
     tag: str | None = Query(default=None),
+    tags: list[str] | None = Query(default=None),
     date_from: date | None = Query(default=None),
     date_to: date | None = Query(default=None),
     sort: str = Query(default="dream_date_desc"),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=9, ge=1, le=30),
 ) -> DreamEntryListResponse:
-    stmt = select(DreamEntry).options(selectinload(DreamEntry.tags))
+    stmt = select(DreamEntry.id, DreamEntry.dream_date, DreamEntry.created_at)
+    try:
+        selected_tags = normalize_tag_names([*([tag] if tag else []), *(tags or [])])
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc)) from exc
 
     if q:
         term = f"%{q.strip()}%"
@@ -42,22 +50,53 @@ def list_dream_entries(
             )
         )
 
-    if tag:
-        stmt = stmt.join(DreamEntry.tags).where(Tag.name == tag)
+    if selected_tags:
+        stmt = (
+            stmt.join(DreamEntry.tags)
+            .where(Tag.name.in_(selected_tags))
+            .group_by(DreamEntry.id, DreamEntry.dream_date, DreamEntry.created_at)
+            .having(func.count(func.distinct(Tag.id)) == len(selected_tags))
+        )
 
     if date_from:
         stmt = stmt.where(DreamEntry.dream_date >= date_from)
     if date_to:
         stmt = stmt.where(DreamEntry.dream_date <= date_to)
 
+    if not selected_tags:
+        stmt = stmt.distinct()
+
     if sort == "dream_date_asc":
         stmt = stmt.order_by(DreamEntry.dream_date.asc(), DreamEntry.created_at.desc())
     else:
         stmt = stmt.order_by(DreamEntry.dream_date.desc(), DreamEntry.created_at.desc())
 
-    entries = session.scalars(stmt).unique().all()
+    total = session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+    total_pages = max(1, math.ceil(total / page_size)) if total else 1
+    page = min(page, total_pages)
+    offset = (page - 1) * page_size
+
+    page_rows = session.execute(stmt.offset(offset).limit(page_size)).all()
+    page_ids = [row[0] for row in page_rows]
+    entries: list[DreamEntry] = []
+
+    if page_ids:
+        entry_stmt = (
+            select(DreamEntry)
+            .where(DreamEntry.id.in_(page_ids))
+            .options(selectinload(DreamEntry.tags))
+        )
+        loaded_entries = session.scalars(entry_stmt).unique().all()
+        entries_by_id = {entry.id: entry for entry in loaded_entries}
+        entries = [entries_by_id[entry_id] for entry_id in page_ids if entry_id in entries_by_id]
+
     return DreamEntryListResponse(
-        total=len(entries),
+        total=total,
+        page=page,
+        page_size=page_size,
+        total_pages=total_pages,
+        has_next=page < total_pages,
+        has_previous=page > 1,
         items=[serialize_entry_summary(entry) for entry in entries],
     )
 
@@ -101,7 +140,6 @@ async def create_dream_entry(
         content=content,
         uploaded_image_url=uploaded_image_url,
         representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
-        mood_summary=build_mood_summary(tag_names),
         is_seed=False,
     )
     entry.tags = _resolve_tags(session, tag_names)
@@ -178,7 +216,6 @@ async def update_dream_entry(
             entry.uploaded_image_url = previous_uploaded_image_url
             raise
         entry.tags = _resolve_tags(session, tag_names)
-        entry.mood_summary = build_mood_summary(tag_names)
         entry.representative_image_url = pick_representative_image(tag_names, entry.uploaded_image_url)
     elif remove_uploaded_image or uploaded_image:
         current_tags = [tag.name for tag in entry.tags]

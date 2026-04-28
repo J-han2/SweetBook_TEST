@@ -19,9 +19,9 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body>
         <QueryProvider>
           <RouteBodyTheme />
-          <div className="min-h-screen">
+          <div className="flex min-h-screen flex-col">
             <AppHeader />
-            <main className="mx-auto max-w-screen-2xl px-6 pb-0 pt-32 lg:px-12">{children}</main>
+            <main className="app-main mx-auto w-full max-w-screen-2xl flex-1 px-6 pb-0 pt-32 lg:px-12">{children}</main>
             <AppFooter />
           </div>
         </QueryProvider>

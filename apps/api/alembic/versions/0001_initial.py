@@ -40,7 +40,6 @@ def upgrade() -> None:
         sa.Column("updated_at", sa.DateTime(), nullable=False),
         sa.Column("representative_image_url", sa.String(length=500), nullable=True),
         sa.Column("uploaded_image_url", sa.String(length=500), nullable=True),
-        sa.Column("mood_summary", sa.String(length=500), nullable=True),
         sa.Column("is_seed", sa.Boolean(), nullable=False),
         sa.PrimaryKeyConstraint("id"),
     )

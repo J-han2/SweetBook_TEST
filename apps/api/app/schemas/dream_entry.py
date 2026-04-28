@@ -14,7 +14,6 @@ class DreamEntrySummaryRead(ORMModel):
     updated_at: datetime
     representative_image_url: str | None
     uploaded_image_url: str | None
-    mood_summary: str | None
     is_seed: bool
     content_preview: str
     tags: list[TagRead]
@@ -29,7 +28,6 @@ class DreamEntryDetailRead(ORMModel):
     updated_at: datetime
     representative_image_url: str | None
     uploaded_image_url: str | None
-    mood_summary: str | None
     is_seed: bool
     tags: list[TagRead]
 
