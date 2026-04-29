@@ -27,11 +27,35 @@ function Test-WslDockerDaemon {
   }
 
   try {
-    & wsl sh -lc "command -v docker >/dev/null 2>&1 && docker version >/dev/null 2>&1"
+    $distros = (& wsl -l -q 2>$null) | Where-Object { $_ -and $_.Trim() -ne "" }
+    if (-not $distros) {
+      return $false
+    }
+
+    & wsl docker version 2>$null | Out-Null
     return ($LASTEXITCODE -eq 0)
   } catch {
     return $false
   }
+}
+
+function Convert-ToWslPath {
+  param(
+    [string]$PathValue
+  )
+
+  if ([string]::IsNullOrWhiteSpace($PathValue)) {
+    return $PathValue
+  }
+
+  if (-not [System.IO.Path]::IsPathRooted($PathValue)) {
+    return $PathValue -replace "\\", "/"
+  }
+
+  $resolved = (Resolve-Path $PathValue).Path
+  $drive = $resolved.Substring(0, 1).ToLowerInvariant()
+  $rest = $resolved.Substring(2) -replace "\\", "/"
+  return "/mnt/$drive$rest"
 }
 
 function Should-WaitForServices {
@@ -98,19 +122,47 @@ function Invoke-LocalCompose {
 
 function Invoke-WslCompose {
   $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-  $drive = $repoRoot.Substring(0, 1).ToLowerInvariant()
-  $rest = $repoRoot.Substring(2) -replace "\\", "/"
-  $linuxRoot = "/mnt/$drive$rest"
+  $linuxRoot = Convert-ToWslPath $repoRoot
 
-  foreach ($arg in $ComposeArgs) {
-    if ($arg -match "[`"']") {
-      throw "Compose arguments with quotes are not supported by this helper."
+  $wslArgs = [System.Collections.Generic.List[string]]::new()
+  $wslArgs.Add("docker")
+  $wslArgs.Add("compose")
+  $wslArgs.Add("--project-directory")
+  $wslArgs.Add($linuxRoot)
+
+  $hasFileArg = $false
+  for ($i = 0; $i -lt $ComposeArgs.Count; $i++) {
+    $arg = $ComposeArgs[$i]
+    if ($arg -in @("-f", "--file")) {
+      $hasFileArg = $true
+      $wslArgs.Add($arg)
+      $i++
+      if ($i -ge $ComposeArgs.Count) {
+        throw "Compose file path is missing after $arg."
+      }
+      $wslArgs.Add((Convert-ToWslPath $ComposeArgs[$i]))
+      continue
     }
+
+    if ($arg -in @("--env-file", "--project-directory")) {
+      $wslArgs.Add($arg)
+      $i++
+      if ($i -ge $ComposeArgs.Count) {
+        throw "Path value is missing after $arg."
+      }
+      $wslArgs.Add((Convert-ToWslPath $ComposeArgs[$i]))
+      continue
+    }
+
+    $wslArgs.Add($arg)
   }
 
-  $joinedArgs = $ComposeArgs -join " "
-  $command = "cd '$linuxRoot' && docker compose $joinedArgs"
-  & wsl sh -lc $command
+  if (-not $hasFileArg) {
+    $wslArgs.Insert(4, "-f")
+    $wslArgs.Insert(5, "$linuxRoot/docker-compose.yml")
+  }
+
+  & wsl @wslArgs
 }
 
 if (Test-LocalDockerDaemon) {
