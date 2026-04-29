@@ -55,7 +55,7 @@ export function DreamCard({
       <div className="flex h-full min-h-[32rem] flex-col overflow-hidden rounded-[28px]">
         <div className="relative h-64 overflow-hidden">
           <img
-            src={resolveMediaUrl(dream.representative_image_url)}
+            src={resolveMediaUrl(dream.image_url)}
             alt={dream.title}
             className="h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.04] group-focus-visible:scale-[1.04]"
             style={{

@@ -138,8 +138,7 @@ async def create_dream_entry(
         title=title,
         dream_date=dream_date,
         content=content,
-        uploaded_image_url=uploaded_image_url,
-        representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
+        image_url=pick_representative_image(tag_names, uploaded_image_url),
         is_seed=False,
     )
     entry.tags = _resolve_tags(session, tag_names)
@@ -166,7 +165,7 @@ async def update_dream_entry(
     manual_tags_provided = manual_tags is not None
     manual_tag_names = _parse_manual_tags(manual_tags) if manual_tags_provided else []
     manual_tags_changed = manual_tags_provided and set(manual_tag_names) != {tag.name for tag in entry.tags}
-    previous_uploaded_image_url = entry.uploaded_image_url
+    previous_image_url = entry.image_url
     new_uploaded_image_url: str | None = None
     delete_previous_after_commit = False
 
@@ -186,12 +185,12 @@ async def update_dream_entry(
         entry.content = content
 
     if remove_uploaded_image and not uploaded_image:
-        entry.uploaded_image_url = None
+        entry.image_url = None
         delete_previous_after_commit = True
 
     if uploaded_image:
         new_uploaded_image_url = await save_upload(uploaded_image)
-        entry.uploaded_image_url = new_uploaded_image_url
+        entry.image_url = new_uploaded_image_url
         delete_previous_after_commit = True
 
     if manual_tags_provided:
@@ -213,18 +212,18 @@ async def update_dream_entry(
         except HTTPException:
             if new_uploaded_image_url:
                 delete_runtime_upload(new_uploaded_image_url)
-            entry.uploaded_image_url = previous_uploaded_image_url
+            entry.image_url = previous_image_url
             raise
         entry.tags = _resolve_tags(session, tag_names)
-        entry.representative_image_url = pick_representative_image(tag_names, entry.uploaded_image_url)
+        entry.image_url = pick_representative_image(tag_names, entry.image_url)
     elif remove_uploaded_image or uploaded_image:
         current_tags = [tag.name for tag in entry.tags]
-        entry.representative_image_url = pick_representative_image(current_tags, entry.uploaded_image_url)
+        entry.image_url = pick_representative_image(current_tags, entry.image_url)
 
     session.add(entry)
     session.commit()
-    if delete_previous_after_commit and previous_uploaded_image_url and previous_uploaded_image_url != entry.uploaded_image_url:
-        delete_runtime_upload(previous_uploaded_image_url)
+    if delete_previous_after_commit and previous_image_url and previous_image_url != entry.image_url:
+        delete_runtime_upload(previous_image_url)
     session.refresh(entry)
     return serialize_entry_detail(_get_entry_or_404(session, entry.id))
 
@@ -242,7 +241,7 @@ def delete_dream_entry(
             detail="책 초안에 포함된 꿈일기는 삭제할 수 없습니다. 초안에서 먼저 제거해 주세요.",
         )
 
-    delete_runtime_upload(entry.uploaded_image_url)
+    delete_runtime_upload(entry.image_url)
     session.delete(entry)
     session.commit()
     return DreamEntryDeleteResponse(ok=True)

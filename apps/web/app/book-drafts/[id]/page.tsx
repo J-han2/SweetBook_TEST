@@ -260,7 +260,7 @@ export default function BookDraftDetailPage() {
 
             <div className="flex min-w-0 flex-1 items-center gap-5">
               <img
-                src={resolveMediaUrl(item.dream_entry.representative_image_url)}
+                src={resolveMediaUrl(item.dream_entry.image_url)}
                 alt={item.dream_entry.title}
                 className="h-28 w-24 rounded-[18px] object-cover"
               />
@@ -425,7 +425,6 @@ export default function BookDraftDetailPage() {
                     className="field-input"
                     value={shippingAddressDetail}
                     onChange={(event) => setShippingAddressDetail(event.target.value)}
-                    placeholder="상세 주소가 있다면 적어주세요"
                   />
                 </div>
               </div>

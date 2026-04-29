@@ -11,23 +11,17 @@ from app.models.order import Order
 settings = get_settings()
 
 
-def build_order_export(order: Order) -> dict:
+def build_order_export(order: Order, folder_prefix: str = "") -> dict:
     items = sorted(order.book_draft.items, key=lambda item: item.sort_order)
     entries = []
 
     for item in items:
-        representative_file, representative_missing = _resolve_export_image(
-            item.dream_entry.representative_image_url,
-            item.dream_entry.id,
-            "representative",
+        image_file, missing_image = _resolve_export_image(
+            item.dream_entry.image_url,
+            order_id=order.id,
+            item_sort_order=item.sort_order,
+            folder_prefix=folder_prefix,
         )
-        uploaded_file, uploaded_missing = _resolve_export_image(
-            item.dream_entry.uploaded_image_url,
-            item.dream_entry.id,
-            "uploaded",
-        )
-
-        missing_images = [entry for entry in [representative_missing, uploaded_missing] if entry]
 
         entries.append(
             {
@@ -36,11 +30,9 @@ def build_order_export(order: Order) -> dict:
                 "title": item.dream_entry.title,
                 "dreamDate": item.dream_entry.dream_date.isoformat(),
                 "content": item.dream_entry.content,
-                "representativeImageUrl": item.dream_entry.representative_image_url,
-                "uploadedImageUrl": item.dream_entry.uploaded_image_url,
-                "representativeImageFile": representative_file,
-                "uploadedImageFile": uploaded_file,
-                "missingImages": missing_images,
+                "imageUrl": item.dream_entry.image_url,
+                "imageFile": image_file,
+                "missingImage": missing_image,
                 "tags": [tag.name for tag in sorted(item.dream_entry.tags, key=lambda tag: (tag.category.value, tag.name))],
             }
         )
@@ -71,54 +63,76 @@ def build_order_export(order: Order) -> dict:
 
 
 def build_order_export_archive(order: Order) -> bytes:
-    payload = build_order_export(order)
     archive = BytesIO()
 
     with ZipFile(archive, "w", compression=ZIP_DEFLATED) as zip_file:
+        payload = build_order_export(order)
         zip_file.writestr("metadata.json", json.dumps(payload, ensure_ascii=False, indent=2))
-
-        written_paths: set[str] = set()
-        items = sorted(order.book_draft.items, key=lambda item: item.sort_order)
-        for item in items:
-            export_assets = [
-                (
-                    item.dream_entry.representative_image_url,
-                    *_resolve_export_image(item.dream_entry.representative_image_url, item.dream_entry.id, "representative"),
-                ),
-                (
-                    item.dream_entry.uploaded_image_url,
-                    *_resolve_export_image(item.dream_entry.uploaded_image_url, item.dream_entry.id, "uploaded"),
-                ),
-            ]
-            for media_url, relative_path, _missing in export_assets:
-                if not relative_path or relative_path in written_paths:
-                    continue
-
-                source = _media_url_to_file_path(media_url)
-                if source is None or not source.exists():
-                    continue
-
-                zip_file.write(source, relative_path)
-                written_paths.add(relative_path)
+        _write_order_images(zip_file, order)
 
     archive.seek(0)
     return archive.getvalue()
 
 
+def build_multi_order_export_archive(orders: list[Order]) -> bytes:
+    archive = BytesIO()
+
+    with ZipFile(archive, "w", compression=ZIP_DEFLATED) as zip_file:
+        written_paths: set[str] = set()
+
+        for order in sorted(orders, key=lambda item: item.id):
+            folder = f"orders/order-{order.id}"
+            payload = build_order_export(order, folder_prefix=folder)
+            zip_file.writestr(f"{folder}/metadata.json", json.dumps(payload, ensure_ascii=False, indent=2))
+            _write_order_images(zip_file, order, folder_prefix=folder, written_paths=written_paths)
+
+    archive.seek(0)
+    return archive.getvalue()
+
+
+def _write_order_images(
+    zip_file: ZipFile,
+    order: Order,
+    folder_prefix: str = "",
+    written_paths: set[str] | None = None,
+) -> None:
+    written = written_paths if written_paths is not None else set()
+    items = sorted(order.book_draft.items, key=lambda item: item.sort_order)
+
+    for item in items:
+        relative_path, _missing = _resolve_export_image(
+            item.dream_entry.image_url,
+            order_id=order.id,
+            item_sort_order=item.sort_order,
+            folder_prefix=folder_prefix,
+        )
+        if not relative_path or relative_path in written:
+            continue
+
+        source = _media_url_to_file_path(item.dream_entry.image_url)
+        if source is None or not source.exists():
+            continue
+
+        zip_file.write(source, relative_path)
+        written.add(relative_path)
+
+
 def _resolve_export_image(
     media_url: str | None,
-    dream_entry_id: int,
-    kind: str,
+    order_id: int,
+    item_sort_order: int,
+    folder_prefix: str = "",
 ) -> tuple[str | None, dict | None]:
     source = _media_url_to_file_path(media_url)
     if source is None:
         return None, None
 
     if not source.exists():
-        return None, {"kind": kind, "sourceUrl": media_url, "reason": "file_not_found"}
+        return None, {"sourceUrl": media_url, "reason": "file_not_found"}
 
     suffix = source.suffix or ".bin"
-    relative_path = f"images/{dream_entry_id}-{kind}{suffix.lower()}"
+    base_path = f"images/order-{order_id}-{item_sort_order}{suffix.lower()}"
+    relative_path = f"{folder_prefix}/{base_path}" if folder_prefix else base_path
     return relative_path, None
 
 

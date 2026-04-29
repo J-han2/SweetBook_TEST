@@ -21,7 +21,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           <RouteBodyTheme />
           <div className="flex min-h-screen flex-col">
             <AppHeader />
-            <main className="app-main mx-auto w-full max-w-screen-2xl flex-1 px-6 pb-0 pt-32 lg:px-12">{children}</main>
+            <main className="app-main mx-auto w-full max-w-screen-2xl flex-1 px-6 pb-0 pt-36 md:pt-32 lg:px-12">{children}</main>
             <AppFooter />
           </div>
         </QueryProvider>

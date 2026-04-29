@@ -36,8 +36,7 @@ export function DreamForm({
   const [content, setContent] = useState(initialData?.content ?? "");
   const [formStep, setFormStep] = useState<1 | 2>(1);
   const [file, setFile] = useState<File | null>(null);
-  const [removeUploadedImage, setRemoveUploadedImage] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(resolveMediaUrl(initialData?.uploaded_image_url, ""));
+  const [previewUrl, setPreviewUrl] = useState<string | null>(resolveMediaUrl(initialData?.image_url, ""));
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [tagEditorError, setTagEditorError] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
@@ -48,14 +47,14 @@ export function DreamForm({
 
   useEffect(() => {
     if (!file) {
-      setPreviewUrl(removeUploadedImage ? null : resolveMediaUrl(initialData?.uploaded_image_url, ""));
+      setPreviewUrl(resolveMediaUrl(initialData?.image_url, ""));
       return;
     }
 
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
     return () => URL.revokeObjectURL(objectUrl);
-  }, [file, initialData?.uploaded_image_url, removeUploadedImage]);
+  }, [file, initialData?.image_url]);
 
   const tagsQuery = useQuery({
     queryKey: ["tags"],
@@ -144,10 +143,6 @@ export function DreamForm({
 
       if (file) {
         formData.append("uploaded_image", file);
-      }
-
-      if (!isCreateMode && removeUploadedImage) {
-        formData.append("remove_uploaded_image", "true");
       }
 
       const shouldSendManualTags = isCreateMode ? selectedTags.length > 0 : tagsTouched;
@@ -360,9 +355,6 @@ export function DreamForm({
             onChange={(event) => {
               const nextFile = event.target.files?.[0] ?? null;
               setFile(nextFile);
-              if (nextFile) {
-                setRemoveUploadedImage(false);
-              }
             }}
           />
         </div>
@@ -378,22 +370,6 @@ export function DreamForm({
             </>
           ) : null}
         </div>
-
-        {!isCreateMode && initialData?.uploaded_image_url ? (
-          <label className="mt-4 flex items-center gap-3 text-sm text-[var(--muted)]">
-            <input
-              type="checkbox"
-              checked={removeUploadedImage}
-              onChange={(event) => {
-                setRemoveUploadedImage(event.target.checked);
-                if (event.target.checked) {
-                  setFile(null);
-                }
-              }}
-            />
-            {"\ud604\uc7ac \uc5c5\ub85c\ub4dc\ub41c \uc774\ubbf8\uc9c0\ub97c \uc81c\uac70\ud560\uac8c\uc694"}
-          </label>
-        ) : null}
       </div>
     );
   }

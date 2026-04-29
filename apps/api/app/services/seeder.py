@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.core.constants import TAG_CATALOG
-from app.core.enums import BookDraftStatus, ExportStatus, OrderStatus
+from app.core.enums import BookDraftStatus, OrderStatus
 from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.order import Order
@@ -29,13 +29,12 @@ def seed_database(session: Session) -> None:
 
     for dream in SEED_DREAMS:
         tag_names = dream["tags"]
-        uploaded_image_url = dream.get("uploaded_image_url")
+        image_url = dream.get("image_url")
         entry = DreamEntry(
             title=dream["title"],
             dream_date=date.fromisoformat(dream["dream_date"]),
             content=dream["content"],
-            uploaded_image_url=uploaded_image_url,
-            representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
+            image_url=pick_representative_image(tag_names, image_url),
             is_seed=True,
         )
         entry.tags = [tag_map[name] for name in tag_names]
@@ -76,14 +75,25 @@ def seed_database(session: Session) -> None:
             shipping_address=order_seed.get("shipping_address"),
             shipping_address_detail=order_seed.get("shipping_address_detail"),
             export_version="1.0",
-            export_status=ExportStatus(order_seed.get("export_status", "pending")),
-            export_error=order_seed.get("export_error"),
             admin_memo=order_seed.get("admin_memo"),
+            created_at=datetime.fromisoformat(order_seed["created_at"]) if order_seed.get("created_at") else None,
+            updated_at=datetime.fromisoformat(order_seed["updated_at"]) if order_seed.get("updated_at") else None,
         )
         session.add(order)
         session.flush()
 
-        if order.status != OrderStatus.PENDING:
+        if order_seed.get("history"):
+            for history_seed in order_seed["history"]:
+                session.add(
+                    OrderStatusHistory(
+                        order_id=order.id,
+                        from_status=history_seed.get("from_status"),
+                        to_status=history_seed["to_status"],
+                        note=history_seed.get("note"),
+                        changed_at=datetime.fromisoformat(history_seed["changed_at"]) if history_seed.get("changed_at") else None,
+                    )
+                )
+        elif order.status != OrderStatus.PENDING:
             session.add(
                 OrderStatusHistory(
                     order_id=order.id,

@@ -12,6 +12,7 @@ from app.core.enums import BookDraftStatus, OrderStatus
 from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.order import Order
+from app.models.order_history import OrderStatusHistory
 from app.schemas.order import OrderConfirmRequest, OrderCreateRequest, OrderListResponse, OrderRead, OrderUpdateRequest
 from app.services.exporter import build_order_export_archive
 from app.services.presenters import serialize_order
@@ -95,6 +96,14 @@ def confirm_order(
     order.recipient_phone = _clean_required_text(payload.recipient_phone, "전화번호")
     order.shipping_address = _clean_required_text(payload.shipping_address, "배송지")
     order.shipping_address_detail = _clean_optional_text(payload.shipping_address_detail)
+    session.add(
+        OrderStatusHistory(
+            order_id=order.id,
+            from_status=order.status.value,
+            to_status=OrderStatus.CONFIRMED.value,
+            note="user_confirm",
+        )
+    )
     order.status = OrderStatus.CONFIRMED
     session.add(order)
     session.commit()
@@ -107,6 +116,14 @@ def receive_order(order_id: int, session: Annotated[Session, Depends(get_session
     if order.status != OrderStatus.SHIPPED:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="발송 완료 상태에서만 수령 확인을 할 수 있습니다.")
 
+    session.add(
+        OrderStatusHistory(
+            order_id=order.id,
+            from_status=order.status.value,
+            to_status=OrderStatus.RECEIVED.value,
+            note="user_receive",
+        )
+    )
     order.status = OrderStatus.RECEIVED
     session.add(order)
     session.commit()
@@ -122,6 +139,14 @@ def cancel_order(order_id: int, session: Annotated[Session, Depends(get_session)
             detail="주문 전 또는 주문 확인 중 상태에서만 주문을 취소할 수 있습니다.",
         )
 
+    session.add(
+        OrderStatusHistory(
+            order_id=order.id,
+            from_status=order.status.value,
+            to_status=OrderStatus.CANCELLED.value,
+            note="user_cancel",
+        )
+    )
     order.status = OrderStatus.CANCELLED
     session.add(order)
     session.commit()

@@ -192,7 +192,7 @@ export function NewBookDraftClient() {
 
                   <div className="flex min-w-0 flex-1 items-center gap-5">
                     <img
-                      src={resolveMediaUrl(dream.representative_image_url)}
+                      src={resolveMediaUrl(dream.image_url)}
                       alt={dream.title}
                       className="h-28 w-24 rounded-[18px] object-cover"
                     />

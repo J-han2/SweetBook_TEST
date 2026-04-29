@@ -4,7 +4,6 @@ import {
   AdminStats,
   BookDraft,
   BookDraftListResponse,
-  BulkExportResult,
   BulkStatusChangeResult,
   DreamEntryDetail,
   DreamEntryListResponse,
@@ -44,6 +43,30 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return response.json() as Promise<T>;
+}
+
+async function requestBlob(path: string, init?: RequestInit): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let detail = "요청을 처리하지 못했어요.";
+
+    try {
+      const payload = await response.json();
+      if (typeof payload.detail === "string") {
+        detail = payload.detail;
+      }
+    } catch {
+      // noop
+    }
+
+    throw new Error(detail);
+  }
+
+  return response.blob();
 }
 
 function buildQuery(params: Record<string, string | number | Array<string | number> | undefined>) {
@@ -253,15 +276,12 @@ export const api = {
       body: JSON.stringify({ order_ids, to_status, note }),
     });
   },
-  adminBulkExport(order_ids: number[]) {
-    return request<BulkExportResult>("/api/admin/orders/bulk-export", {
+  adminExportArchive(order_ids: number[]) {
+    return requestBlob("/api/admin/orders/export-archive", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ order_ids }),
     });
-  },
-  adminRetryExport(id: number) {
-    return request<AdminOrder>(`/api/admin/orders/${id}/retry-export`, { method: "POST" });
   },
   adminUpdateMemo(id: number, memo: string | null) {
     return request<AdminOrder>(`/api/admin/orders/${id}/memo`, {
@@ -270,8 +290,8 @@ export const api = {
       body: JSON.stringify({ memo }),
     });
   },
-  adminGetStats() {
-    return request<AdminStats>("/api/admin/stats");
+  adminGetStats(params?: { date_from?: string; date_to?: string }) {
+    return request<AdminStats>(`/api/admin/stats${buildQuery(params ?? {})}`);
   },
   adminCsvUrl(params: { status?: OrderStatus[]; q?: string; date_from?: string; date_to?: string }) {
     return `${API_BASE_URL}/api/admin/orders/export/csv${buildQuery(params)}`;

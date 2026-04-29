@@ -37,7 +37,7 @@ function DreamContent({
   const imageRef = useRef<HTMLImageElement | null>(null);
   const queryClient = useQueryClient();
   const router = useRouter();
-  const imageSrc = resolveMediaUrl(dream.representative_image_url);
+  const imageSrc = resolveMediaUrl(dream.image_url);
 
   const deleteMutation = useMutation({
     mutationFn: () => api.deleteDreamEntry(dream.id),
@@ -396,35 +396,46 @@ export default function DreamDetailPage() {
         </Link>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => navigateWithFade(prevHref)}
-            disabled={!prevHref || isNavigating}
-            className="secondary-button inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
-              <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            이전
-          </button>
-          <button
-            type="button"
-            onClick={() => navigateWithFade(nextHref)}
-            disabled={!nextHref || isNavigating}
-            className="secondary-button inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            다음
-            <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
-              <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
+          {prevHref ? (
+            <button
+              type="button"
+              onClick={() => navigateWithFade(prevHref)}
+              disabled={isNavigating}
+              className="secondary-button inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              이전
+            </button>
+          ) : null}
+
+          {nextHref ? (
+            <button
+              type="button"
+              onClick={() => navigateWithFade(nextHref)}
+              disabled={isNavigating}
+              className="secondary-button inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              다음
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ) : null}
         </div>
       </div>
 
       {dreamQuery.isError || (!dreamQuery.isLoading && !dream) ? (
-        <StatePanel title="꿈 이야기를 찾을 수 없어요" description="이미 삭제했거나 잘못된 주소일 수 있어요." />
+        <StatePanel title="꿈 이야기를 찾을 수 없어요" description="이미 삭제되었거나 잘못된 주소로 접근한 것 같아요." />
       ) : dream ? (
-        <DreamContent key={`${dreamId}-${searchParams.get("nav") ?? "initial"}`} dream={dream} isLeaving={isNavigating} returnIds={returnIds} isAddMode={isAddMode} />
+        <DreamContent
+          key={`${dreamId}-${searchParams.get("nav") ?? "initial"}`}
+          dream={dream}
+          isLeaving={isNavigating}
+          returnIds={returnIds}
+          isAddMode={isAddMode}
+        />
       ) : (
         <DreamContentPlaceholder />
       )}

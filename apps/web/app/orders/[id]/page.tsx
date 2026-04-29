@@ -295,7 +295,7 @@ export default function OrderDetailPage() {
 
               <div className="flex min-w-0 flex-1 items-center gap-4 md:gap-5">
                 <img
-                  src={resolveMediaUrl(item.dream_entry.representative_image_url)}
+                  src={resolveMediaUrl(item.dream_entry.image_url)}
                   alt={item.dream_entry.title}
                   className="h-28 w-24 shrink-0 rounded-[18px] object-cover"
                 />
@@ -339,7 +339,6 @@ export default function OrderDetailPage() {
                 <label className="field-label">수령인 이름</label>
                 <input
                   className="field-input mt-1"
-                  placeholder="홍길동"
                   value={recipientName}
                   onChange={(event) => setRecipientName(event.target.value)}
                 />
@@ -349,7 +348,6 @@ export default function OrderDetailPage() {
                 <label className="field-label">전화번호</label>
                 <input
                   className="field-input mt-1"
-                  placeholder="010-0000-0000"
                   value={recipientPhone}
                   onChange={(event) => setRecipientPhone(event.target.value)}
                 />
@@ -359,7 +357,6 @@ export default function OrderDetailPage() {
                 <label className="field-label">배송지</label>
                 <input
                   className="field-input mt-1"
-                  placeholder="서울시 강남구 테헤란로 123"
                   value={shippingAddress}
                   onChange={(event) => setShippingAddress(event.target.value)}
                 />
@@ -369,7 +366,6 @@ export default function OrderDetailPage() {
                 <label className="field-label">상세 주소 (선택)</label>
                 <input
                   className="field-input mt-1"
-                  placeholder="101동 101호"
                   value={shippingAddressDetail}
                   onChange={(event) => setShippingAddressDetail(event.target.value)}
                 />

@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.core.enums import ExportStatus, OrderStatus
+from app.core.enums import OrderStatus
 from app.schemas.book_draft import BookDraftRead
 from app.schemas.common import ORMModel, PaginatedResponse
 
@@ -24,8 +24,6 @@ class AdminOrderRead(ORMModel):
     recipient_phone: str | None
     shipping_address: str | None
     shipping_address_detail: str | None
-    export_status: ExportStatus
-    export_error: str | None
     admin_memo: str | None
     export_version: str
     created_at: datetime
@@ -54,13 +52,6 @@ class BulkExportRequest(BaseModel):
     order_ids: list[int]
 
 
-class BulkExportResult(BaseModel):
-    success_count: int
-    failure_count: int
-    failures: list[dict]
-    download_urls: list[dict]
-
-
 class AdminMemoRequest(BaseModel):
     memo: str | None = None
 
@@ -73,9 +64,7 @@ class AdminStats(BaseModel):
     shipped_orders: int
     received_orders: int
     cancelled_orders: int
-    export_pending: int
-    export_processing: int
-    export_completed: int
-    export_failed: int
-    popular_tags: list[dict]
     total_dreams: int
+    daily_orders: list[dict]
+    monthly_orders: list[dict]
+    status_breakdown: list[dict]

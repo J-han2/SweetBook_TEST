@@ -1,7 +1,6 @@
 export type TagCategory = "emotion" | "event" | "symbol" | "relation" | "custom";
 export type BookDraftStatus = "draft" | "finalized";
 export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "received" | "cancelled";
-export type ExportStatus = "pending" | "processing" | "completed" | "failed";
 
 export interface Tag {
   id: number;
@@ -15,8 +14,7 @@ export interface DreamEntrySummary {
   dream_date: string;
   created_at: string;
   updated_at: string;
-  representative_image_url: string | null;
-  uploaded_image_url: string | null;
+  image_url: string | null;
   is_seed: boolean;
   content_preview: string;
   tags: Tag[];
@@ -89,8 +87,6 @@ export interface OrderStatusHistory {
 }
 
 export interface AdminOrder extends Order {
-  export_status: ExportStatus;
-  export_error: string | null;
   admin_memo: string | null;
   status_history: OrderStatusHistory[];
 }
@@ -113,25 +109,16 @@ export interface AdminStats {
   shipped_orders: number;
   received_orders: number;
   cancelled_orders: number;
-  export_pending: number;
-  export_processing: number;
-  export_completed: number;
-  export_failed: number;
-  popular_tags: Array<{ name: string; category: string; usage_count: number }>;
   total_dreams: number;
+  daily_orders: Array<{ label: string; value: number }>;
+  monthly_orders: Array<{ label: string; value: number }>;
+  status_breakdown: Array<{ status: OrderStatus; label: string; value: number }>;
 }
 
 export interface BulkStatusChangeResult {
   success_count: number;
   failure_count: number;
   failures: Array<{ order_id: number; reason: string }>;
-}
-
-export interface BulkExportResult {
-  success_count: number;
-  failure_count: number;
-  failures: Array<{ order_id: number; reason: string }>;
-  download_urls: Array<{ order_id: number; url: string; filename: string }>;
 }
 
 export interface TagPreviewResult {

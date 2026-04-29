@@ -44,7 +44,7 @@ export function DreamListItem({
       className="glass-card interactive-card archive-card-frame flex cursor-pointer flex-col gap-5 p-5 transition duration-300 hover:-translate-y-1 focus-visible:-translate-y-1 focus-visible:outline-none md:flex-row md:items-center md:p-6"
     >
       <img
-        src={resolveMediaUrl(dream.representative_image_url)}
+        src={resolveMediaUrl(dream.image_url)}
         alt={dream.title}
         className="h-36 w-full rounded-[22px] object-cover md:h-28 md:w-24 md:flex-none"
       />

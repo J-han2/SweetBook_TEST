@@ -27,8 +27,7 @@ class DreamEntry(Base):
         onupdate=datetime.utcnow,
         server_default=func.now(),
     )
-    representative_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    uploaded_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_seed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     tags: Mapped[list[Tag]] = relationship(
