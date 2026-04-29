@@ -87,7 +87,7 @@ Copy-Item .env.example .env
 ### 1-4. 배포용 실행
 
 ```powershell
-.\scripts\up.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
 ```
 
 이 스크립트는 다음 순서로 동작합니다.
@@ -112,7 +112,7 @@ Invoke-WebRequest http://localhost:8000/health -UseBasicParsing
 Windows에서 Docker 연결이 되지 않으면:
 
 ```powershell
-.\scripts\docker-doctor.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\docker-doctor.ps1
 ```
 
 ## 2. Linux 실행 방법
@@ -233,7 +233,7 @@ docker compose up -d
 Windows PowerShell에서는:
 
 ```powershell
-.\scripts\up.ps1 -ComposeArgs @("up", "-d")
+powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '-d') }"
 ```
 
 ### 종료
@@ -263,7 +263,7 @@ docker compose down -v
 ### Windows
 
 ```powershell
-.\scripts\up-debug.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\up-debug.ps1
 ```
 
 ### Linux / macOS
@@ -323,6 +323,22 @@ docker compose build
 docker compose up -d
 ```
 
+### 3. Windows에서 `PSSecurityException` 이 발생하는 경우
+
+PowerShell 실행 정책 때문에 `.ps1` 스크립트가 차단된 상황입니다.
+
+README의 Windows 명령은 모두 아래 방식으로 실행하면 됩니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
+```
+
+진단 스크립트도 같은 방식으로 실행합니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\docker-doctor.ps1
+```
+
 로컬 캐시된 이미지로 재기동할 수 있습니다.
 
 ### 3. 컨테이너 상태 확인
@@ -354,7 +370,7 @@ cd SweetBook_TEST
 git lfs install
 git lfs pull
 Copy-Item .env.example .env
-.\scripts\up.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
 ```
 
 ### Linux / macOS
