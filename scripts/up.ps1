@@ -1,5 +1,5 @@
 param(
-  [string[]]$ComposeArgs = @("up", "--build", "-d")
+  [string[]]$ComposeArgs = @("up", "-d")
 )
 
 $ErrorActionPreference = "Stop"
@@ -32,6 +32,54 @@ function Test-WslDockerDaemon {
   } catch {
     return $false
   }
+}
+
+function Should-WaitForServices {
+  return ($ComposeArgs.Count -gt 0 -and $ComposeArgs[0] -eq "up")
+}
+
+function Test-HttpReady {
+  param(
+    [string]$Url
+  )
+
+  try {
+    $null = Invoke-WebRequest $Url -UseBasicParsing -TimeoutSec 5
+    return $true
+  } catch {
+    return $false
+  }
+}
+
+function Wait-ForServices {
+  if (-not (Should-WaitForServices)) {
+    return
+  }
+
+  $checks = @(
+    @{ Name = "API"; Url = "http://localhost:8000/health" },
+    @{ Name = "WEB"; Url = "http://localhost:3000" }
+  )
+
+  foreach ($check in $checks) {
+    $ready = $false
+    for ($i = 0; $i -lt 60; $i++) {
+      if (Test-HttpReady -Url $check.Url) {
+        $ready = $true
+        break
+      }
+      Start-Sleep -Seconds 2
+    }
+
+    if (-not $ready) {
+      Write-Host "$($check.Name) did not become reachable in time: $($check.Url)" -ForegroundColor Yellow
+      return
+    }
+  }
+
+  Write-Host "API and WEB are reachable." -ForegroundColor Green
+  Write-Host "Frontend: http://localhost:3000" -ForegroundColor Green
+  Write-Host "Backend:  http://localhost:8000/docs" -ForegroundColor Green
 }
 
 function Invoke-LocalCompose {
@@ -68,12 +116,18 @@ function Invoke-WslCompose {
 if (Test-LocalDockerDaemon) {
   Write-Host "Using local Docker daemon..." -ForegroundColor Green
   Invoke-LocalCompose
+  if ($LASTEXITCODE -eq 0) {
+    Wait-ForServices
+  }
   exit $LASTEXITCODE
 }
 
 if (Test-WslDockerDaemon) {
   Write-Host "Local Docker daemon was not reachable. Falling back to WSL Docker..." -ForegroundColor Yellow
   Invoke-WslCompose
+  if ($LASTEXITCODE -eq 0) {
+    Wait-ForServices
+  }
   exit $LASTEXITCODE
 }
 
