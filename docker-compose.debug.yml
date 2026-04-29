@@ -4,6 +4,12 @@ services:
     tty: true
     environment:
       WATCHFILES_FORCE_POLLING: "true"
+    volumes:
+      - ./apps/api/app:/app/app
+      - ./apps/api/alembic:/app/alembic
+      - ./apps/api/alembic.ini:/app/alembic.ini
+      - ./apps/api/data:/app/data
+      - ./apps/api/storage/uploads/runtime:/app/storage/uploads/runtime
     command: >
       sh -c "alembic upgrade head &&
       uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
@@ -14,6 +20,17 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
       WATCHPACK_POLLING: "true"
+    volumes:
+      - ./apps/web/app:/app/app
+      - ./apps/web/components:/app/components
+      - ./apps/web/lib:/app/lib
+      - ./apps/web/public:/app/public
+      - ./apps/web/package.json:/app/package.json
+      - ./apps/web/next-env.d.ts:/app/next-env.d.ts
+      - ./apps/web/next.config.mjs:/app/next.config.mjs
+      - ./apps/web/postcss.config.js:/app/postcss.config.js
+      - ./apps/web/tailwind.config.ts:/app/tailwind.config.ts
+      - ./apps/web/tsconfig.json:/app/tsconfig.json
     command: >
       sh -c "until wget -qO- http://api:8000/health >/dev/null; do
       echo 'waiting for api';

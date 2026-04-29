@@ -9,10 +9,6 @@ export interface Tag {
   category: TagCategory;
 }
 
-export interface PopularTag extends Tag {
-  usage_count: number;
-}
-
 export interface DreamEntrySummary {
   id: number;
   title: string;
@@ -82,39 +78,6 @@ export interface OrderListResponse {
   items: Order[];
 }
 
-export interface OrderExportPayload {
-  exportVersion: string;
-  order: {
-    id: number;
-    status: OrderStatus;
-    quantity: number;
-    recipientName: string | null;
-    recipientPhone: string | null;
-    shippingAddress: string | null;
-    shippingAddressDetail: string | null;
-    createdAt: string;
-    updatedAt: string;
-  };
-  book: {
-    id: number;
-    title: string;
-    subtitle: string | null;
-    coverPhrase: string | null;
-    coverTheme: string | null;
-    status: BookDraftStatus;
-  };
-  entries: Array<{
-    order: number;
-    id: number;
-    title: string;
-    dreamDate: string;
-    content: string;
-    representativeImageUrl: string | null;
-    uploadedImageUrl: string | null;
-    tags: string[];
-  }>;
-}
-
 // Admin types
 export interface OrderStatusHistory {
   id: number;
@@ -169,13 +132,6 @@ export interface BulkExportResult {
   failure_count: number;
   failures: Array<{ order_id: number; reason: string }>;
   download_urls: Array<{ order_id: number; url: string; filename: string }>;
-}
-
-export interface TaggerStatus {
-  available: boolean;
-  modelPath: string;
-  chatFormat: string | null;
-  nCtx: number;
 }
 
 export interface TagPreviewResult {

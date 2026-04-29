@@ -1,6 +1,13 @@
-import { BookDraftStatus, OrderStatus, TagCategory } from "@/lib/types";
+import { BookDraftStatus, OrderStatus } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+export const COVER_THEMES = [
+  { value: "midnight-blue", label: "한밤의 푸른빛" },
+  { value: "starlit-plum", label: "별빛 자두빛" },
+  { value: "cream-dusk", label: "크림 노을" },
+  { value: "emerald-night", label: "에메랄드 밤" },
+] as const;
 
 export function formatDate(value: string) {
   return new Intl.DateTimeFormat("ko-KR", {
@@ -8,17 +15,6 @@ export function formatDate(value: string) {
     month: "long",
     day: "numeric",
   }).format(new Date(value));
-}
-
-export function categoryLabel(category: TagCategory) {
-  const labels: Record<TagCategory, string> = {
-    emotion: "감정",
-    event: "상황",
-    symbol: "상징",
-    relation: "관계",
-    custom: "사용자 태그",
-  };
-  return labels[category];
 }
 
 export function bookDraftStatusLabel(status: BookDraftStatus) {

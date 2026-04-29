@@ -8,14 +8,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { StatePanel } from "@/components/ui/state-panel";
 import { TagPill } from "@/components/ui/tag-pill";
 import { api } from "@/lib/api";
-import { coverThemeClasses, formatDate, resolveMediaUrl, themeLabel } from "@/lib/utils";
-
-const coverThemes = [
-  { value: "midnight-blue", label: "한밤의 푸른빛" },
-  { value: "starlit-plum", label: "별빛 자두빛" },
-  { value: "cream-dusk", label: "크림 노을" },
-  { value: "emerald-night", label: "에메랄드 밤" },
-];
+import { COVER_THEMES, coverThemeClasses, formatDate, resolveMediaUrl, themeLabel } from "@/lib/utils";
 
 export default function BookDraftDetailPage() {
   const params = useParams<{ id: string }>();
@@ -56,6 +49,7 @@ export default function BookDraftDetailPage() {
     if (!draftQuery.data) {
       return;
     }
+
     setTitle(draftQuery.data.title);
     setSubtitle(draftQuery.data.subtitle ?? "");
     setCoverPhrase(draftQuery.data.cover_phrase ?? "");
@@ -66,6 +60,7 @@ export default function BookDraftDetailPage() {
     if (!orderQuery.data || orderQuery.data.book_draft.id !== draftId) {
       return;
     }
+
     setQuantity(orderQuery.data.quantity);
     setRecipientName(orderQuery.data.recipient_name ?? "");
     setRecipientPhone(orderQuery.data.recipient_phone ?? "");
@@ -128,13 +123,20 @@ export default function BookDraftDetailPage() {
         cover_phrase: coverPhrase,
         cover_theme: coverTheme,
       });
-      return api.updateOrder(requestedOrderId, {
-        quantity,
-        recipient_name: recipientName,
-        recipient_phone: recipientPhone,
-        shipping_address: shippingAddress,
-        shipping_address_detail: shippingAddressDetail,
-      });
+
+      const orderPayload = orderForEdit?.status === "confirmed"
+        ? {
+            quantity,
+            recipient_name: recipientName,
+            recipient_phone: recipientPhone,
+            shipping_address: shippingAddress,
+            shipping_address_detail: shippingAddressDetail,
+          }
+        : {
+            quantity,
+          };
+
+      return api.updateOrder(requestedOrderId, orderPayload);
     },
     onSuccess: async () => {
       await refresh();
@@ -153,13 +155,15 @@ export default function BookDraftDetailPage() {
     return <StatePanel title="책 초안을 불러오는 중" description="표지와 꿈의 순서를 준비하고 있어요." />;
   }
 
-  if (draftQuery.isError || !draftQuery.data) {
-    return <StatePanel title="책 초안을 찾을 수 없어요" description="삭제했거나 잘못된 주소일 수 있어요." />;
+  if (draftQuery.isError || !draftQuery.data || (hasRequestedOrder && orderQuery.isError)) {
+    return <StatePanel title="책 초안을 찾을 수 없어요" description="이미 삭제되었거나 잘못된 주소일 수 있어요." />;
   }
 
   const draft = draftQuery.data;
   const orderForEdit = orderQuery.data && orderQuery.data.book_draft.id === draftId ? orderQuery.data : null;
-  const isEditingExistingOrder = orderForEdit?.status === "confirmed";
+  const isEditableOrderStatus = orderForEdit?.status === "pending" || orderForEdit?.status === "confirmed";
+  const shouldShowShippingSection = orderForEdit?.status === "confirmed";
+  const isEditingExistingOrder = Boolean(isEditableOrderStatus);
   const showCreateOrderFlow = draft.status === "finalized" && !hasRequestedOrder;
   const showOrderEditReturnOnly = draft.status === "finalized" && hasRequestedOrder && !isEditingExistingOrder;
   const canDragSort = draft.status === "draft" || isEditingExistingOrder;
@@ -299,7 +303,7 @@ export default function BookDraftDetailPage() {
               </div>
               <p className="section-kicker mt-6">{formatDate(draft.updated_at)}</p>
               <h1 className="mt-4 font-display text-5xl leading-tight text-[var(--accent-strong)]">{draft.title}</h1>
-              <p className="mt-4 text-base italic text-[var(--muted-strong)]">{draft.subtitle || "부제가 아직 없어요"}</p>
+              <p className="mt-4 text-base italic text-[var(--muted-strong)]">{draft.subtitle || "부제가 아직 없어요."}</p>
             </div>
 
             <div className="rounded-[28px] border border-white/60 bg-white/40 p-8 backdrop-blur">
@@ -330,7 +334,7 @@ export default function BookDraftDetailPage() {
                       onChange={(event) => setCoverTheme(event.target.value)}
                       disabled={!canEditDraftFields}
                     >
-                      {coverThemes.map((theme) => (
+                      {COVER_THEMES.map((theme) => (
                         <option key={theme.value} value={theme.value}>
                           {theme.label}
                         </option>
@@ -359,7 +363,7 @@ export default function BookDraftDetailPage() {
                   <p className="section-kicker">Edit Order</p>
                   <h2 className="mt-3 font-display text-4xl text-[var(--accent-strong)]">Reading Order</h2>
                   <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
-                    꿈 카드를 드래그해서 순서를 바꾸고, 필요한 장면을 추가하거나 삭제해보세요.
+                    꿈 카드를 드래그해 순서를 바꾸고, 필요한 장면을 추가하거나 삭제해보세요.
                   </p>
                 </div>
 
@@ -376,18 +380,33 @@ export default function BookDraftDetailPage() {
                 </div>
               </div>
 
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                <div>
-                  <label className="field-label">수량</label>
-                  <input
-                    className="field-input"
-                    type="number"
-                    min={1}
-                    max={99}
-                    value={quantity}
-                    onChange={(event) => setQuantity(Number(event.target.value))}
-                  />
-                </div>
+              <div className="max-w-[220px]">
+                <label className="field-label">수량</label>
+                <input
+                  className="field-input"
+                  type="number"
+                  min={1}
+                  max={99}
+                  value={quantity}
+                  onChange={(event) => setQuantity(Number(event.target.value))}
+                />
+              </div>
+
+              {localError ? <div className="rounded-[24px] bg-[rgba(245,215,223,0.84)] px-6 py-4 text-sm text-[#8f4854]">{localError}</div> : null}
+            </div>
+          </div>
+
+          {shouldShowShippingSection ? (
+            <section className="glass-card p-6 md:p-7">
+              <div className="max-w-3xl">
+                <p className="section-kicker">Delivery Info</p>
+                <h2 className="mt-3 font-display text-3xl text-[var(--accent-strong)]">배송 정보 수정</h2>
+                <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
+                  주문 확인 중에는 수령인 정보와 배송지를 함께 수정할 수 있어요.
+                </p>
+              </div>
+
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="field-label">수령인 이름</label>
                   <input className="field-input" value={recipientName} onChange={(event) => setRecipientName(event.target.value)} />
@@ -396,11 +415,11 @@ export default function BookDraftDetailPage() {
                   <label className="field-label">전화번호</label>
                   <input className="field-input" value={recipientPhone} onChange={(event) => setRecipientPhone(event.target.value)} />
                 </div>
-                <div className="md:col-span-2 xl:col-span-2">
+                <div className="md:col-span-2">
                   <label className="field-label">배송지</label>
                   <input className="field-input" value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} />
                 </div>
-                <div>
+                <div className="md:col-span-2">
                   <label className="field-label">상세 주소</label>
                   <input
                     className="field-input"
@@ -410,10 +429,8 @@ export default function BookDraftDetailPage() {
                   />
                 </div>
               </div>
-
-              {localError ? <div className="rounded-[24px] bg-[rgba(245,215,223,0.84)] px-6 py-4 text-sm text-[#8f4854]">{localError}</div> : null}
-            </div>
-          </div>
+            </section>
+          ) : null}
 
           {draftCards}
         </section>
@@ -439,7 +456,7 @@ export default function BookDraftDetailPage() {
                 </>
               ) : showOrderEditReturnOnly ? (
                 <Link href={`/orders/${requestedOrderId}`} className="secondary-button w-full">
-                  주문 상세로 돌아가기
+                  이전 화면으로
                 </Link>
               ) : showCreateOrderFlow ? (
                 <button className="primary-button w-full" onClick={() => prepareOrderMutation.mutate()} disabled={prepareOrderMutation.isPending}>

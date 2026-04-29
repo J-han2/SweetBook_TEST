@@ -9,14 +9,7 @@ import { StatePanel } from "@/components/ui/state-panel";
 import { TagPill } from "@/components/ui/tag-pill";
 import { api } from "@/lib/api";
 import { DreamEntrySummary } from "@/lib/types";
-import { coverThemeClasses, formatDate, resolveMediaUrl } from "@/lib/utils";
-
-const coverThemes = [
-  { value: "midnight-blue", label: "한밤의 푸른빛" },
-  { value: "starlit-plum", label: "별빛 자두빛" },
-  { value: "cream-dusk", label: "크림 노을" },
-  { value: "emerald-night", label: "에메랄드 밤" },
-];
+import { COVER_THEMES, coverThemeClasses, formatDate, resolveMediaUrl } from "@/lib/utils";
 
 export function NewBookDraftClient() {
   const router = useRouter();
@@ -126,7 +119,7 @@ export function NewBookDraftClient() {
           <section className="glass-card p-8">
             <h2 className="font-display text-3xl text-[var(--accent-strong)]">표지 테마</h2>
             <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
-              {coverThemes.map((theme) => {
+              {COVER_THEMES.map((theme) => {
                 const active = coverTheme === theme.value;
                 return (
                   <button

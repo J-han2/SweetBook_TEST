@@ -1,5 +1,5 @@
 param(
-  [string[]]$ComposeArgs = @("up", "--build")
+  [string[]]$ComposeArgs = @("up", "--build", "-d")
 )
 
 $ErrorActionPreference = "Stop"
@@ -50,7 +50,9 @@ function Invoke-LocalCompose {
 
 function Invoke-WslCompose {
   $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
-  $linuxRoot = (& wsl wslpath -a $repoRoot).Trim()
+  $drive = $repoRoot.Substring(0, 1).ToLowerInvariant()
+  $rest = $repoRoot.Substring(2) -replace "\\", "/"
+  $linuxRoot = "/mnt/$drive$rest"
 
   foreach ($arg in $ComposeArgs) {
     if ($arg -match "[`"']") {

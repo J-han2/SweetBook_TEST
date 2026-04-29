@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/dreamarchive.db}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
@@ -10,11 +11,8 @@ services:
       LLM_CHAT_FORMAT: ${LLM_CHAT_FORMAT:-chatml}
       LLM_N_CTX: ${LLM_N_CTX:-2048}
     volumes:
-      - ./apps/api/app:/app/app
-      - ./apps/api/alembic:/app/alembic
-      - ./apps/api/alembic.ini:/app/alembic.ini
-      - ./apps/api/data:/app/data
-      - ./apps/api/storage:/app/storage
+      - api_data:/app/data
+      - api_runtime_uploads:/app/storage/uploads/runtime
     ports:
       - "${API_PORT:-8000}:8000"
     healthcheck:
@@ -32,29 +30,21 @@ services:
       context: ./apps/web
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
-    volumes:
-      - ./apps/web/app:/app/app
-      - ./apps/web/components:/app/components
-      - ./apps/web/lib:/app/lib
-      - ./apps/web/public:/app/public
-      - ./apps/web/package.json:/app/package.json
-      - ./apps/web/next-env.d.ts:/app/next-env.d.ts
-      - ./apps/web/next.config.mjs:/app/next.config.mjs
-      - ./apps/web/postcss.config.js:/app/postcss.config.js
-      - ./apps/web/tailwind.config.ts:/app/tailwind.config.ts
-      - ./apps/web/tsconfig.json:/app/tsconfig.json
     depends_on:
       api:
         condition: service_healthy
-    command: >
-      sh -c "until wget -qO- http://api:8000/health >/dev/null; do
-      echo 'waiting for api';
-      sleep 2;
-      done &&
-      rm -rf .next &&
-      npm run build &&
-      npm run start -- --hostname 0.0.0.0 --port 3000"
     ports:
       - "${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+volumes:
+  api_data:
+  api_runtime_uploads:

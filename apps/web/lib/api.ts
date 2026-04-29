@@ -11,10 +11,8 @@ import {
   Order,
   OrderListResponse,
   OrderStatus,
-  PopularTag,
   Tag,
   TagPreviewResult,
-  TaggerStatus,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -117,12 +115,6 @@ export const api = {
   },
   listTags() {
     return request<Tag[]>("/api/tags");
-  },
-  popularTags() {
-    return request<PopularTag[]>("/api/tags/popular");
-  },
-  getTaggerStatus() {
-    return request<TaggerStatus>("/api/ai/tagger-status");
   },
   createTag(payload: { name: string; category?: Tag["category"] }) {
     return request<Tag>("/api/tags", {
@@ -241,9 +233,6 @@ export const api = {
       method: "POST",
     });
   },
-  exportOrderUrl(id: number) {
-    return `${API_BASE_URL}/api/orders/${id}/export`;
-  },
 
   // Admin APIs
   adminListOrders(params: {
@@ -256,9 +245,6 @@ export const api = {
     page_size?: number;
   }) {
     return request<AdminOrderListResponse>(`/api/admin/orders${buildQuery(params)}`);
-  },
-  adminGetOrder(id: number) {
-    return request<AdminOrder>(`/api/admin/orders/${id}`);
   },
   adminBulkStatus(order_ids: number[], to_status: OrderStatus, note?: string) {
     return request<BulkStatusChangeResult>("/api/admin/orders/bulk-status", {
