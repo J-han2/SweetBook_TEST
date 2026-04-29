@@ -28,7 +28,7 @@ docker compose version
 - Docker Compose plugin: https://docs.docker.com/compose/install/linux/
 - Git LFS: https://git-lfs.com/
 
-
+#### 실행
 ```bash
 #저장소 클론
 git clone https://github.com/J-han2/SweetBook_TEST.git
