@@ -28,6 +28,68 @@ https://github.com/J-han2/SweetBook_TEST.git
 - 백엔드 Swagger: `http://localhost:8000/docs`
 - 백엔드 Health Check: `http://localhost:8000/health`
 
+## 포트 변경 방법
+
+기본 포트는 아래와 같습니다.
+
+- 프론트엔드: `3000`
+- 백엔드: `8000`
+
+포트를 바꾸려면 프로젝트 루트의 `.env` 파일에서 아래 값을 수정하면 됩니다.
+
+```env
+WEB_PORT=3000
+API_PORT=8000
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
+FRONTEND_ORIGIN=http://localhost:3000
+```
+
+각 값의 의미:
+
+- `WEB_PORT`: 브라우저에서 접속할 프론트엔드 포트
+- `API_PORT`: 브라우저/프론트엔드가 접속할 백엔드 포트
+- `NEXT_PUBLIC_API_BASE_URL`: 프론트엔드가 호출할 백엔드 주소
+- `FRONTEND_ORIGIN`: 백엔드 CORS 허용 주소
+
+예를 들어 프론트를 `3100`, 백엔드를 `8100`으로 바꾸고 싶다면:
+
+```env
+WEB_PORT=3100
+API_PORT=8100
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8100
+FRONTEND_ORIGIN=http://localhost:3100
+```
+
+포트를 변경한 뒤에는 컨테이너를 다시 올려야 합니다.
+
+일반 재실행:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+이미지까지 다시 빌드해야 하는 경우:
+
+```bash
+docker compose down
+docker compose up --build -d
+```
+
+Windows PowerShell에서는:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('down') }"
+powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '-d') }"
+```
+
+빌드까지 다시 하려면:
+
+```powershell
+powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('down') }"
+powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '--build', '-d') }"
+```
+
 ## 공통 준비 사항
 
 모든 운영체제에서 아래 도구가 필요합니다.
@@ -42,6 +104,64 @@ https://github.com/J-han2/SweetBook_TEST.git
 - Windows: Docker Desktop + PowerShell
 - Linux: Docker Engine + Docker Compose plugin
 - macOS: Docker Desktop
+
+## Docker 설치 안내
+
+아직 Docker가 설치되지 않았다면, 아래 순서대로 먼저 준비해 주세요.
+
+### Windows
+
+1. Docker Desktop for Windows 설치  
+   공식 문서: https://docs.docker.com/desktop/setup/install/windows-install/
+2. 설치 과정에서 WSL 2 기반 사용을 권장합니다.
+3. 설치 후 Docker Desktop을 실행합니다.
+4. PowerShell에서 아래 명령으로 동작을 확인합니다.
+
+```powershell
+docker version
+docker compose version
+```
+
+### macOS
+
+1. Docker Desktop for Mac 설치  
+   공식 문서: https://docs.docker.com/desktop/setup/install/mac-install/
+2. Docker Desktop을 실행합니다.
+3. 터미널에서 아래 명령으로 동작을 확인합니다.
+
+```bash
+docker version
+docker compose version
+```
+
+### Linux
+
+Linux는 배포판마다 설치 방법이 다릅니다. 이 README는 Ubuntu 계열을 기준으로 안내합니다.
+
+1. Docker Engine 설치  
+   공식 문서: https://docs.docker.com/engine/install/ubuntu/
+2. Docker Compose plugin 설치  
+   공식 문서: https://docs.docker.com/compose/install/linux/
+3. 설치 후 아래 명령으로 동작을 확인합니다.
+
+```bash
+docker version
+docker compose version
+```
+
+4. 현재 사용자로 `docker` 명령을 바로 쓰려면 필요에 따라 Docker post-installation 설정을 추가로 진행해 주세요.
+
+### Git LFS 설치 확인
+
+이 프로젝트는 모델 파일을 Git LFS로 받습니다. Docker 설치 후 Git LFS도 함께 준비되어 있어야 합니다.
+
+공식 사이트: https://git-lfs.com/
+
+확인 명령:
+
+```bash
+git lfs version
+```
 
 ## 1. Windows 실행 방법
 
@@ -101,6 +221,8 @@ powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
 
 - `Local Docker daemon was not reachable. Falling back to WSL Docker...` 문구는 오류가 아니라 자동 전환 안내입니다.
 - 이 문구 뒤에 컨테이너가 계속 올라오면 정상입니다.
+- 같은 PC에 예전 `sweetbook_test-web`, `sweetbook_test-api` 이미지가 이미 있으면 기존 이미지를 재사용할 수 있습니다.
+- 이 경우 최신 코드를 반영하려면 아래의 "코드 변경으로 이미지를 다시 빌드해야 할 때" 명령을 사용하세요.
 
 ### 1-5. 실행 확인
 
@@ -185,6 +307,8 @@ docker compose up -d
 
 - 처음 실행이고 이미지가 없으면 Docker가 이미지를 빌드합니다.
 - 이미 한 번 빌드가 끝난 환경에서는 기존 이미지를 사용해 바로 실행됩니다.
+- 이전 버전 이미지가 이미 남아 있으면 최신 코드가 아니라 예전 이미지가 올라올 수 있습니다.
+- 이 경우 아래의 "코드 변경으로 이미지를 다시 빌드해야 할 때" 명령을 사용하세요.
 
 ### 2-5. 실행 확인
 
@@ -241,6 +365,9 @@ cp .env.example .env
 ```bash
 docker compose up -d
 ```
+
+- 이전 버전 이미지가 이미 남아 있으면 최신 코드가 아니라 예전 이미지가 올라올 수 있습니다.
+- 이 경우 아래의 "코드 변경으로 이미지를 다시 빌드해야 할 때" 명령을 사용하세요.
 
 ### 3-5. 실행 확인
 
