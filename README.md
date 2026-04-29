@@ -214,15 +214,14 @@ powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
 
 1. Windows Docker daemon 연결 시도
 2. 연결 실패 시 WSL 내부 Docker로 자동 fallback
-3. `docker compose up -d` 실행
+3. `docker compose up --build -d` 실행
 4. API와 프론트엔드가 실제로 응답할 때까지 대기
 
 참고:
 
 - `Local Docker daemon was not reachable. Falling back to WSL Docker...` 문구는 오류가 아니라 자동 전환 안내입니다.
 - 이 문구 뒤에 컨테이너가 계속 올라오면 정상입니다.
-- 같은 PC에 예전 `sweetbook_test-web`, `sweetbook_test-api` 이미지가 이미 있으면 기존 이미지를 재사용할 수 있습니다.
-- 이 경우 최신 코드를 반영하려면 아래의 "코드 변경으로 이미지를 다시 빌드해야 할 때" 명령을 사용하세요.
+- 기본 실행은 항상 `--build`를 포함하므로, 같은 PC에 예전 이미지가 남아 있어도 최신 코드 기준으로 다시 빌드됩니다.
 
 ### 1-5. 실행 확인
 
@@ -300,15 +299,13 @@ cp .env.example .env
 ### 2-4. 배포용 실행
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
 설명:
 
 - 처음 실행이고 이미지가 없으면 Docker가 이미지를 빌드합니다.
-- 이미 한 번 빌드가 끝난 환경에서는 기존 이미지를 사용해 바로 실행됩니다.
-- 이전 버전 이미지가 이미 남아 있으면 최신 코드가 아니라 예전 이미지가 올라올 수 있습니다.
-- 이 경우 아래의 "코드 변경으로 이미지를 다시 빌드해야 할 때" 명령을 사용하세요.
+- 이미 한 번 빌드가 끝난 환경에서도 최신 소스를 기준으로 다시 빌드합니다.
 
 ### 2-5. 실행 확인
 
@@ -363,11 +360,10 @@ cp .env.example .env
 ### 3-4. 배포용 실행
 
 ```bash
-docker compose up -d
+docker compose up --build -d
 ```
 
-- 이전 버전 이미지가 이미 남아 있으면 최신 코드가 아니라 예전 이미지가 올라올 수 있습니다.
-- 이 경우 아래의 "코드 변경으로 이미지를 다시 빌드해야 할 때" 명령을 사용하세요.
+- 기본 실행은 항상 `--build`를 포함하므로, 예전 이미지가 남아 있어도 최신 소스를 기준으로 다시 빌드합니다.
 
 ### 3-5. 실행 확인
 
@@ -379,7 +375,7 @@ curl -I http://localhost:3000
 
 ## 재실행 / 종료 / 초기화
 
-### 이미 한 번 빌드한 뒤 다시 실행
+### 이미 한 번 빌드한 뒤 빠르게 다시 실행
 
 ```bash
 docker compose up -d
@@ -486,13 +482,14 @@ docker compose build
 - VPN / 프록시 / 사내망 제한 확인
 - 잠시 후 다시 시도
 
-이미 한 번 빌드가 끝난 환경이라면:
+이미 한 번 빌드가 끝난 환경에서 빠르게 다시 켜기만 하려면:
 
 ```bash
 docker compose up -d
 ```
 
-로컬 캐시된 이미지로 재기동할 수 있습니다.
+로컬 캐시된 이미지로 재기동할 수 있습니다.  
+단, 최신 코드를 반영하려면 `docker compose up --build -d`를 사용해야 합니다.
 
 ### 3. 컨테이너 상태 확인
 
@@ -534,5 +531,5 @@ cd SweetBook_TEST
 git lfs install
 git lfs pull
 cp .env.example .env
-docker compose up -d
+docker compose up --build -d
 ```

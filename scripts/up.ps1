@@ -1,5 +1,5 @@
 param(
-  [string[]]$ComposeArgs = @("up", "-d")
+  [string[]]$ComposeArgs = @("up", "--build", "-d")
 )
 
 $ErrorActionPreference = "Stop"
@@ -60,6 +60,10 @@ function Convert-ToWslPath {
 
 function Should-WaitForServices {
   return ($ComposeArgs.Count -gt 0 -and $ComposeArgs[0] -eq "up")
+}
+
+function Is-BuildMode {
+  return ($ComposeArgs -contains "--build")
 }
 
 function Test-HttpReady {
@@ -170,6 +174,10 @@ if (Test-LocalDockerDaemon) {
   Invoke-LocalCompose
   if ($LASTEXITCODE -eq 0) {
     Wait-ForServices
+  } elseif (Is-BuildMode) {
+    Write-Host "Build failed while trying to refresh images from the latest source." -ForegroundColor Yellow
+    Write-Host "If the error mentions Docker Hub, check your network and retry." -ForegroundColor Yellow
+    Write-Host "Running without --build may reuse an old image and not reflect the latest code." -ForegroundColor Yellow
   }
   exit $LASTEXITCODE
 }
@@ -179,6 +187,10 @@ if (Test-WslDockerDaemon) {
   Invoke-WslCompose
   if ($LASTEXITCODE -eq 0) {
     Wait-ForServices
+  } elseif (Is-BuildMode) {
+    Write-Host "Build failed while trying to refresh images from the latest source." -ForegroundColor Yellow
+    Write-Host "If the error mentions Docker Hub, check your network and retry." -ForegroundColor Yellow
+    Write-Host "Running without --build may reuse an old image and not reflect the latest code." -ForegroundColor Yellow
   }
   exit $LASTEXITCODE
 }
