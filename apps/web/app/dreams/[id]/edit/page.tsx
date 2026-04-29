@@ -18,11 +18,21 @@ export default function EditDreamPage() {
   });
 
   if (dreamQuery.isLoading) {
-    return <StatePanel title="꿈일기를 불러오는 중" description="수정할 기록과 기존 메모, 이미지를 준비하고 있습니다." />;
+    return (
+      <StatePanel
+        title="Dream is loading"
+        description="Preparing the current writing, tags, and image for editing."
+      />
+    );
   }
 
   if (dreamQuery.isError || !dreamQuery.data) {
-    return <StatePanel title="꿈일기를 찾을 수 없습니다" description="이미 삭제된 기록이거나 잘못된 주소일 수 있습니다." />;
+    return (
+      <StatePanel
+        title="Dream not found"
+        description="The entry may have been deleted, or the link might be invalid."
+      />
+    );
   }
 
   return <DreamForm mode="edit" initialData={dreamQuery.data} />;

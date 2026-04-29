@@ -20,7 +20,6 @@ class DreamEntry(Base):
     title: Mapped[str] = mapped_column(String(200))
     dream_date: Mapped[date] = mapped_column(Date, index=True)
     content: Mapped[str] = mapped_column(Text)
-    memo: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime,
@@ -28,9 +27,7 @@ class DreamEntry(Base):
         onupdate=datetime.utcnow,
         server_default=func.now(),
     )
-    representative_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    uploaded_image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
-    mood_summary: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     is_seed: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
 
     tags: Mapped[list[Tag]] = relationship(

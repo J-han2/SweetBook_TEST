@@ -1,6 +1,6 @@
 export type TagCategory = "emotion" | "event" | "symbol" | "relation" | "custom";
 export type BookDraftStatus = "draft" | "finalized";
-export type OrderStatus = "pending" | "processing" | "completed" | "cancelled";
+export type OrderStatus = "pending" | "confirmed" | "processing" | "shipped" | "received" | "cancelled";
 
 export interface Tag {
   id: number;
@@ -8,20 +8,13 @@ export interface Tag {
   category: TagCategory;
 }
 
-export interface PopularTag extends Tag {
-  usage_count: number;
-}
-
 export interface DreamEntrySummary {
   id: number;
   title: string;
   dream_date: string;
-  memo: string | null;
   created_at: string;
   updated_at: string;
-  representative_image_url: string | null;
-  uploaded_image_url: string | null;
-  mood_summary: string | null;
+  image_url: string | null;
   is_seed: boolean;
   content_preview: string;
   tags: Tag[];
@@ -33,6 +26,11 @@ export interface DreamEntryDetail extends Omit<DreamEntrySummary, "content_previ
 
 export interface DreamEntryListResponse {
   total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
   items: DreamEntrySummary[];
 }
 
@@ -63,6 +61,10 @@ export interface Order {
   id: number;
   status: OrderStatus;
   quantity: number;
+  recipient_name: string | null;
+  recipient_phone: string | null;
+  shipping_address: string | null;
+  shipping_address_detail: string | null;
   export_version: string;
   created_at: string;
   updated_at: string;
@@ -74,42 +76,49 @@ export interface OrderListResponse {
   items: Order[];
 }
 
-export interface OrderExportPayload {
-  exportVersion: string;
-  order: {
-    id: number;
-    status: OrderStatus;
-    quantity: number;
-    createdAt: string;
-    updatedAt: string;
-  };
-  book: {
-    id: number;
-    title: string;
-    subtitle: string | null;
-    coverPhrase: string | null;
-    coverTheme: string | null;
-    status: BookDraftStatus;
-  };
-  entries: Array<{
-    order: number;
-    id: number;
-    title: string;
-    dreamDate: string;
-    content: string;
-    memo: string | null;
-    representativeImageUrl: string | null;
-    uploadedImageUrl: string | null;
-    moodSummary: string | null;
-    tags: string[];
-  }>;
+// Admin types
+export interface OrderStatusHistory {
+  id: number;
+  order_id: number;
+  from_status: string | null;
+  to_status: string;
+  note: string | null;
+  changed_at: string;
 }
 
-export interface TaggerStatus {
-  available: boolean;
-  modelPath: string;
-  chatFormat: string | null;
-  nCtx: number;
+export interface AdminOrder extends Order {
+  admin_memo: string | null;
+  status_history: OrderStatusHistory[];
+}
+
+export interface AdminOrderListResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+  has_next: boolean;
+  has_previous: boolean;
+  items: AdminOrder[];
+}
+
+export interface AdminStats {
+  total_orders: number;
+  pending_orders: number;
+  confirmed_orders: number;
+  processing_orders: number;
+  shipped_orders: number;
+  received_orders: number;
+  cancelled_orders: number;
+  total_dreams: number;
+  daily_orders: Array<{ label: string; value: number }>;
+  monthly_orders: Array<{ label: string; value: number }>;
+  status_breakdown: Array<{ status: OrderStatus; label: string; value: number }>;
+}
+
+export interface BulkStatusChangeResult {
+  success_count: number;
+  failure_count: number;
+  failures: Array<{ order_id: number; reason: string }>;
 }
 
 export interface TagPreviewResult {

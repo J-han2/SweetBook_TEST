@@ -9,8 +9,8 @@ export default function NewBookDraftPage() {
     <Suspense
       fallback={
         <StatePanel
-          title="책 초안 구성을 준비하는 중"
-          description="선택한 꿈일기와 표지 설정을 불러오고 있습니다."
+          title="책 초안을 준비하는 중"
+          description="선택한 꿈일기와 표지 설정 정보를 불러오고 있어요."
         />
       }
     >

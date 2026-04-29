@@ -26,6 +26,10 @@ class BookDraftReorderRequest(BaseModel):
     ordered_item_ids: list[int] = Field(min_length=1)
 
 
+class BookDraftItemAddRequest(BaseModel):
+    dream_entry_id: int
+
+
 class BookDraftItemRead(ORMModel):
     id: int
     sort_order: int

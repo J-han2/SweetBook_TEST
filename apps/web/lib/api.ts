@@ -1,14 +1,17 @@
 import {
+  AdminOrder,
+  AdminOrderListResponse,
+  AdminStats,
   BookDraft,
   BookDraftListResponse,
+  BulkStatusChangeResult,
   DreamEntryDetail,
   DreamEntryListResponse,
   Order,
   OrderListResponse,
-  PopularTag,
-  TagPreviewResult,
-  TaggerStatus,
+  OrderStatus,
   Tag,
+  TagPreviewResult,
 } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
@@ -20,26 +23,70 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    let detail = "요청을 처리하지 못했습니다.";
+    let detail = "요청을 처리하지 못했어요.";
+
     try {
       const payload = await response.json();
-      detail = payload.detail ?? detail;
+      if (Array.isArray(payload.detail)) {
+        detail = payload.detail
+          .map((item: { msg?: string }) => item?.msg)
+          .filter(Boolean)
+          .join("\n");
+      } else if (typeof payload.detail === "string") {
+        detail = payload.detail;
+      }
     } catch {
       // noop
     }
+
     throw new Error(detail);
   }
 
   return response.json() as Promise<T>;
 }
 
-function buildQuery(params: Record<string, string | undefined>) {
+async function requestBlob(path: string, init?: RequestInit): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}${path}`, {
+    ...init,
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    let detail = "요청을 처리하지 못했어요.";
+
+    try {
+      const payload = await response.json();
+      if (typeof payload.detail === "string") {
+        detail = payload.detail;
+      }
+    } catch {
+      // noop
+    }
+
+    throw new Error(detail);
+  }
+
+  return response.blob();
+}
+
+function buildQuery(params: Record<string, string | number | Array<string | number> | undefined>) {
   const query = new URLSearchParams();
+
   Object.entries(params).forEach(([key, value]) => {
-    if (value) {
-      query.set(key, value);
+    if (Array.isArray(value)) {
+      value.forEach((item) => {
+        if (item !== "") {
+          query.append(key, String(item));
+        }
+      });
+      return;
+    }
+
+    if (value !== undefined && value !== "") {
+      query.set(key, String(value));
     }
   });
+
   const serialized = query.toString();
   return serialized ? `?${serialized}` : "";
 }
@@ -48,9 +95,12 @@ export const api = {
   listDreamEntries(params: {
     q?: string;
     tag?: string;
+    tags?: string[];
     date_from?: string;
     date_to?: string;
     sort?: string;
+    page?: number;
+    page_size?: number;
   }) {
     return request<DreamEntryListResponse>(`/api/dream-entries${buildQuery(params)}`);
   },
@@ -62,10 +112,12 @@ export const api = {
       method: "POST",
       body: formData,
     });
+
     if (!response.ok) {
-      const payload = await response.json().catch(() => ({ detail: "꿈일기를 저장하지 못했습니다." }));
-      throw new Error(payload.detail ?? "꿈일기를 저장하지 못했습니다.");
+      const payload = await response.json().catch(() => ({ detail: "꿈 기록을 저장하지 못했어요." }));
+      throw new Error(payload.detail ?? "꿈 기록을 저장하지 못했어요.");
     }
+
     return response.json() as Promise<DreamEntryDetail>;
   },
   async updateDreamEntry(id: number, formData: FormData) {
@@ -73,10 +125,12 @@ export const api = {
       method: "PATCH",
       body: formData,
     });
+
     if (!response.ok) {
-      const payload = await response.json().catch(() => ({ detail: "꿈일기를 수정하지 못했습니다." }));
-      throw new Error(payload.detail ?? "꿈일기를 수정하지 못했습니다.");
+      const payload = await response.json().catch(() => ({ detail: "꿈 기록을 수정하지 못했어요." }));
+      throw new Error(payload.detail ?? "꿈 기록을 수정하지 못했어요.");
     }
+
     return response.json() as Promise<DreamEntryDetail>;
   },
   async deleteDreamEntry(id: number) {
@@ -84,12 +138,6 @@ export const api = {
   },
   listTags() {
     return request<Tag[]>("/api/tags");
-  },
-  popularTags() {
-    return request<PopularTag[]>("/api/tags/popular");
-  },
-  getTaggerStatus() {
-    return request<TaggerStatus>("/api/ai/tagger-status");
   },
   createTag(payload: { name: string; category?: Tag["category"] }) {
     return request<Tag>("/api/tags", {
@@ -138,10 +186,22 @@ export const api = {
       body: JSON.stringify({ ordered_item_ids }),
     });
   },
+  addBookDraftItem(id: number, dream_entry_id: number) {
+    return request<BookDraft>(`/api/book-drafts/${id}/items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dream_entry_id }),
+    });
+  },
+  removeBookDraftItem(id: number, item_id: number) {
+    return request<BookDraft>(`/api/book-drafts/${id}/items/${item_id}`, {
+      method: "DELETE",
+    });
+  },
   finalizeBookDraft(id: number) {
     return request<BookDraft>(`/api/book-drafts/${id}/finalize`, { method: "POST" });
   },
-  createOrder(payload: { book_draft_id: number; quantity: number }) {
+  createOrder(payload: { book_draft_id: number }) {
     return request<Order>("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -154,14 +214,86 @@ export const api = {
   getOrder(id: number) {
     return request<Order>(`/api/orders/${id}`);
   },
-  updateOrderStatus(id: number, status: string) {
-    return request<Order>(`/api/orders/${id}/status`, {
+  updateOrder(
+    id: number,
+    payload: {
+      quantity?: number;
+      recipient_name?: string;
+      recipient_phone?: string;
+      shipping_address?: string;
+      shipping_address_detail?: string;
+    },
+  ) {
+    return request<Order>(`/api/orders/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(payload),
     });
   },
-  exportOrderUrl(id: number) {
-    return `${API_BASE_URL}/api/orders/${id}/export`;
+  confirmOrder(
+    id: number,
+    payload: {
+      quantity: number;
+      recipient_name: string;
+      recipient_phone: string;
+      shipping_address: string;
+      shipping_address_detail?: string;
+    },
+  ) {
+    return request<Order>(`/api/orders/${id}/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  },
+  receiveOrder(id: number) {
+    return request<Order>(`/api/orders/${id}/receive`, {
+      method: "POST",
+    });
+  },
+  cancelOrder(id: number) {
+    return request<Order>(`/api/orders/${id}/cancel`, {
+      method: "POST",
+    });
+  },
+
+  // Admin APIs
+  adminListOrders(params: {
+    status?: OrderStatus[];
+    q?: string;
+    date_from?: string;
+    date_to?: string;
+    sort?: string;
+    page?: number;
+    page_size?: number;
+  }) {
+    return request<AdminOrderListResponse>(`/api/admin/orders${buildQuery(params)}`);
+  },
+  adminBulkStatus(order_ids: number[], to_status: OrderStatus, note?: string) {
+    return request<BulkStatusChangeResult>("/api/admin/orders/bulk-status", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_ids, to_status, note }),
+    });
+  },
+  adminExportArchive(order_ids: number[]) {
+    return requestBlob("/api/admin/orders/export-archive", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ order_ids }),
+    });
+  },
+  adminUpdateMemo(id: number, memo: string | null) {
+    return request<AdminOrder>(`/api/admin/orders/${id}/memo`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memo }),
+    });
+  },
+  adminGetStats(params?: { date_from?: string; date_to?: string }) {
+    return request<AdminStats>(`/api/admin/stats${buildQuery(params ?? {})}`);
+  },
+  adminCsvUrl(params: { status?: OrderStatus[]; q?: string; date_from?: string; date_to?: string }) {
+    return `${API_BASE_URL}/api/admin/orders/export/csv${buildQuery(params)}`;
   },
 };

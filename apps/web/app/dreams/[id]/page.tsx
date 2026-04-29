@@ -1,136 +1,444 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { StatePanel } from "@/components/ui/state-panel";
 import { TagPill } from "@/components/ui/tag-pill";
 import { api } from "@/lib/api";
+import { DreamEntryDetail } from "@/lib/types";
 import { formatDate, resolveMediaUrl } from "@/lib/utils";
 
-export default function DreamDetailPage() {
-  const params = useParams<{ id: string }>();
-  const router = useRouter();
-  const queryClient = useQueryClient();
-  const dreamId = Number(params.id);
+const DEFAULT_NAV_PAGE_SIZE = 200;
+const DETAIL_ENTER_DURATION_MS = 420;
+const DETAIL_LEAVE_DURATION_MS = 160;
+const DETAIL_FADE_EASING = "cubic-bezier(0.22, 1, 0.36, 1)";
+const DETAIL_LOADING_SURFACE = "transparent";
 
-  const dreamQuery = useQuery({
-    queryKey: ["dream", dreamId],
-    queryFn: () => api.getDreamEntry(dreamId),
-    enabled: Number.isFinite(dreamId),
-  });
+function DreamContentPlaceholder() {
+  return <div className="min-h-[72vh]" />;
+}
+
+function DreamContent({
+  dream,
+  isLeaving,
+  returnIds,
+  isAddMode,
+}: {
+  dream: DreamEntryDetail;
+  isLeaving: boolean;
+  returnIds: string | null;
+  isAddMode: boolean;
+}) {
+  const [imgLoaded, setImgLoaded] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
+  const queryClient = useQueryClient();
+  const router = useRouter();
+  const imageSrc = resolveMediaUrl(dream.image_url);
 
   const deleteMutation = useMutation({
-    mutationFn: () => api.deleteDreamEntry(dreamId),
+    mutationFn: () => api.deleteDreamEntry(dream.id),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ["dreams"] });
       router.push("/dreams");
     },
   });
 
-  if (dreamQuery.isLoading) {
-    return <StatePanel title="꿈 상세를 불러오는 중" description="본문, 태그, 이미지와 메모를 하나의 장면으로 정리하고 있습니다." />;
-  }
+  useEffect(() => {
+    setImgLoaded(false);
+    setRevealed(false);
+  }, [imageSrc, dream.id]);
 
-  if (dreamQuery.isError || !dreamQuery.data) {
-    return <StatePanel title="기록을 찾을 수 없습니다" description="삭제된 꿈이거나 잘못된 주소일 수 있습니다." />;
-  }
+  useEffect(() => {
+    if (imageRef.current?.complete) {
+      setImgLoaded(true);
+    }
+  }, [imageSrc]);
 
-  const dream = dreamQuery.data;
-  const showUploadedAside = dream.uploaded_image_url && dream.uploaded_image_url !== dream.representative_image_url;
+  useEffect(() => {
+    if (isLeaving) {
+      setRevealed(false);
+      return;
+    }
+
+    if (!imgLoaded) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      setRevealed(true);
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [imgLoaded, isLeaving]);
 
   return (
-    <div className="space-y-16">
-      <section className="relative overflow-hidden rounded-[36px]">
-        <img src={resolveMediaUrl(dream.representative_image_url)} alt={dream.title} className="h-[460px] w-full object-cover md:h-[620px]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[rgba(250,248,245,0.92)] via-[rgba(250,248,245,0.18)] to-transparent" />
-      </section>
+    <div className="relative min-h-[72vh]">
+      <div
+        aria-hidden
+        className={`pointer-events-none absolute inset-0 z-20 transition-opacity duration-200 ${revealed ? "opacity-0" : "opacity-100"}`}
+        style={{ background: DETAIL_LOADING_SURFACE }}
+      />
 
-      <div className="mx-auto -mt-40 max-w-5xl px-2">
-        <article className="glass-card p-8 md:p-12">
-          <header className="mb-12">
-            <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-              <div>
-                <p className="section-kicker">{formatDate(dream.dream_date)}</p>
-                <h1 className="mt-4 font-display text-4xl leading-tight text-[var(--accent-strong)] md:text-6xl">{dream.title}</h1>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                <Link href={`/dreams/${dream.id}/edit`} className="secondary-button">
-                  Edit
-                </Link>
-                <button
-                  type="button"
-                  className="danger-button"
-                  onClick={() => {
-                    if (window.confirm("정말 이 꿈일기를 삭제할까요?")) {
-                      deleteMutation.mutate();
-                    }
-                  }}
-                >
-                  Delete
-                </button>
-                <Link href={`/book-drafts/new?ids=${dream.id}`} className="primary-button">
-                  Add to Book Draft
-                </Link>
-              </div>
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-2">
-              {dream.tags.map((tag) => (
-                <TagPill key={tag.id} tag={tag} />
-              ))}
-            </div>
-          </header>
-
-          <div className="space-y-8">
-            {dream.mood_summary ? (
-              <p className="font-display text-2xl italic leading-10 text-[var(--muted-strong)]">“{dream.mood_summary}”</p>
-            ) : null}
-
-            <div className="space-y-8 text-lg leading-9 text-[var(--muted-strong)]">
-              {dream.content.split("\n").filter(Boolean).map((paragraph, index) => (
-                <p key={`${dream.id}-${index}`}>{paragraph}</p>
-              ))}
-            </div>
+      <div
+        className={`grid items-start gap-8 transition-opacity lg:grid-cols-[minmax(0,2fr)_minmax(0,3fr)] ${revealed ? "opacity-100" : "opacity-0"}`}
+        style={{
+          minHeight: "72vh",
+          transitionDuration: `${isLeaving ? DETAIL_LEAVE_DURATION_MS : DETAIL_ENTER_DURATION_MS}ms`,
+          transitionTimingFunction: DETAIL_FADE_EASING,
+        }}
+      >
+        <div
+          className={`overflow-hidden rounded-[28px] lg:sticky lg:top-8 ${imgLoaded ? "bg-[rgba(232,222,253,0.18)]" : ""}`}
+          style={!imgLoaded ? { background: DETAIL_LOADING_SURFACE } : undefined}
+        >
+          <div
+            className="relative aspect-video w-full overflow-hidden lg:aspect-[3/4]"
+            style={{ background: imgLoaded ? "rgba(232, 222, 253, 0.1)" : "transparent" }}
+          >
+            <img
+              ref={imageRef}
+              src={imageSrc}
+              alt={dream.title}
+              className="h-full w-full object-cover"
+              style={{ background: "transparent" }}
+              onLoad={() => setImgLoaded(true)}
+              onError={() => setImgLoaded(true)}
+            />
           </div>
+        </div>
 
-          <div className="mt-12 rounded-r-[24px] border-l-4 border-[rgba(108,95,142,0.28)] bg-white/35 p-8">
-            <p className="field-label">Personal Reflection</p>
-            <p className="mt-3 font-display text-2xl italic leading-10 text-[var(--muted-strong)]">
-              {dream.memo || "아직 메모가 남아 있지 않습니다. 이 꿈이 남긴 감정이나 현실의 연결점을 적어 두면 더 풍부한 기록이 됩니다."}
-            </p>
+        <article className={`relative overflow-hidden ${imgLoaded ? "glass-card p-8 md:p-10" : "border-transparent bg-transparent p-0"}`}>
+          <div className="relative flex min-h-[20rem] flex-col gap-8 md:min-h-[26rem] lg:min-h-[36rem]">
+            <header>
+              <p className="section-kicker">{formatDate(dream.dream_date)}</p>
+              <h1 className="mt-4 font-display text-4xl leading-tight text-[var(--accent-strong)] md:text-5xl">{dream.title}</h1>
+
+              {dream.tags.length > 0 ? (
+                <div className="mt-6 flex flex-wrap gap-2">
+                  {dream.tags.map((tag) => (
+                    <TagPill key={tag.id} tag={tag} />
+                  ))}
+                </div>
+              ) : null}
+            </header>
+
+            <div className="flex-1 space-y-6 text-base leading-9 text-[var(--muted-strong)]">
+              {dream.content
+                .split("\n")
+                .map((paragraph) => paragraph.trim())
+                .filter(Boolean)
+                .map((paragraph, index) => (
+                  <p key={`${dream.id}-${index}`}>{paragraph}</p>
+                ))}
+            </div>
+
+            <div className="mt-auto flex flex-wrap justify-end gap-3">
+              <Link href={`/dreams/${dream.id}/edit`} className="secondary-button">
+                수정
+              </Link>
+              <button
+                type="button"
+                className="danger-button disabled:cursor-not-allowed disabled:opacity-45"
+                disabled={isAddMode}
+                onClick={() => {
+                  if (isAddMode) {
+                    return;
+                  }
+                  if (window.confirm("이 기록을 삭제할까요?")) {
+                    deleteMutation.mutate();
+                  }
+                }}
+              >
+                삭제
+              </button>
+              {!isAddMode ? (
+                <Link
+                  href={(() => {
+                    const merged = Array.from(new Set([...(returnIds ? returnIds.split(",").map(Number).filter(Boolean) : []), dream.id]));
+                    return `/book-drafts?ids=${merged.join(",")}`;
+                  })()}
+                  className="primary-button"
+                >
+                  책에 담기
+                </Link>
+              ) : null}
+            </div>
           </div>
         </article>
       </div>
+    </div>
+  );
+}
 
-      <section className="mx-auto grid max-w-5xl gap-6 md:grid-cols-2">
-        {showUploadedAside ? (
-          <div className="glass-card overflow-hidden">
-            <img src={resolveMediaUrl(dream.uploaded_image_url, "")} alt="업로드 이미지" className="h-72 w-full object-cover" />
-            <div className="p-6">
-              <p className="section-kicker">Uploaded Image</p>
-              <p className="mt-3 text-sm leading-7 text-[var(--muted)]">기록 작성 시 함께 남겨 둔 개인 업로드 이미지입니다.</p>
-            </div>
-          </div>
-        ) : (
-          <div className="glass-card p-8">
-            <p className="section-kicker">Visual Note</p>
-            <h2 className="mt-3 font-display text-3xl text-[var(--accent-strong)]">대표 이미지</h2>
-            <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-              업로드 이미지가 없으면 태그와 분위기 기반 플레이스홀더 대표 이미지가 연결됩니다.
-            </p>
-          </div>
-        )}
+export default function DreamDetailPage() {
+  const params = useParams<{ id: string }>();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const dreamId = Number(params.id);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const navigationTimeoutRef = useRef<number | null>(null);
 
-        <div className="glass-card p-8">
-          <p className="section-kicker">Archive Intent</p>
-          <h2 className="mt-3 font-display text-3xl text-[var(--accent-strong)]">콘텐츠 감상이 중심입니다</h2>
-          <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-            이 상세 페이지는 꿈일기 자체를 다시 읽고 태그와 메모를 함께 감상하는 경험에 집중합니다. 책에 담기 액션은 그 뒤에 자연스럽게 이어지는 부가 기능으로만 배치했습니다.
-          </p>
+  const returnIds = searchParams.get("returnIds");
+  const addToDraftId = searchParams.get("addToDraft");
+  const addToOrderId = searchParams.get("orderId");
+  const returnToOrderId = searchParams.get("returnToOrder");
+  const isAddMode = !!addToDraftId;
+  const selectedTags = searchParams.getAll("tags");
+  const q = searchParams.get("q") ?? undefined;
+  const dateFrom = searchParams.get("date_from") ?? undefined;
+  const dateTo = searchParams.get("date_to") ?? undefined;
+  const sort = searchParams.get("sort") ?? "dream_date_desc";
+  const contextPage = Number(searchParams.get("page")) || 1;
+  const contextPageSize = Number(searchParams.get("page_size")) || 9;
+  const hasExplicitContext =
+    searchParams.has("page") ||
+    searchParams.has("q") ||
+    searchParams.has("tags") ||
+    searchParams.has("date_from") ||
+    searchParams.has("date_to") ||
+    searchParams.has("sort");
+
+  const navigationPage = hasExplicitContext ? contextPage : 1;
+  const navigationPageSize = hasExplicitContext ? contextPageSize : DEFAULT_NAV_PAGE_SIZE;
+
+  const backParams = useMemo(() => {
+    const paramsForBack = new URLSearchParams();
+    if (q) paramsForBack.set("q", q);
+    selectedTags.forEach((tag) => paramsForBack.append("tags", tag));
+    if (dateFrom) paramsForBack.set("date_from", dateFrom);
+    if (dateTo) paramsForBack.set("date_to", dateTo);
+    paramsForBack.set("sort", sort);
+    paramsForBack.set("page", String(navigationPage));
+    paramsForBack.set("page_size", String(navigationPageSize));
+    if (addToOrderId) paramsForBack.set("orderId", addToOrderId);
+    return paramsForBack;
+  }, [addToOrderId, dateFrom, dateTo, navigationPage, navigationPageSize, q, selectedTags, sort]);
+
+  const archiveHref = isAddMode
+    ? `/book-drafts/${addToDraftId}/add-dreams${backParams.toString() ? `?${backParams.toString()}` : ""}`
+    : returnToOrderId
+      ? `/orders/${returnToOrderId}`
+      : "/dreams";
+
+  const dreamQuery = useQuery({
+    queryKey: ["dream", dreamId],
+    queryFn: () => api.getDreamEntry(dreamId),
+    enabled: Number.isFinite(dreamId),
+    staleTime: 30_000,
+  });
+
+  const neighborQuery = useQuery({
+    queryKey: [
+      "dreams-nav",
+      {
+        q,
+        tags: selectedTags,
+        dateFrom,
+        dateTo,
+        sort,
+        page: navigationPage,
+        pageSize: navigationPageSize,
+      },
+    ],
+    queryFn: () =>
+      api.listDreamEntries({
+        q: q || undefined,
+        tags: selectedTags.length ? selectedTags : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        sort,
+        page: navigationPage,
+        page_size: navigationPageSize,
+      }),
+  });
+
+  const items = neighborQuery.data?.items ?? [];
+  const totalPages = neighborQuery.data?.total_pages ?? 1;
+  const currentIndex = items.findIndex((item) => item.id === dreamId);
+  const isFirstOnPage = currentIndex === 0 && navigationPage > 1;
+  const isLastOnPage = currentIndex === items.length - 1 && currentIndex >= 0 && navigationPage < totalPages;
+
+  const prevPageQuery = useQuery({
+    queryKey: ["dreams-nav", { q, tags: selectedTags, dateFrom, dateTo, sort, page: navigationPage - 1, pageSize: navigationPageSize }],
+    queryFn: () =>
+      api.listDreamEntries({
+        q: q || undefined,
+        tags: selectedTags.length ? selectedTags : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        sort,
+        page: navigationPage - 1,
+        page_size: navigationPageSize,
+      }),
+    enabled: isFirstOnPage,
+  });
+
+  const nextPageQuery = useQuery({
+    queryKey: ["dreams-nav", { q, tags: selectedTags, dateFrom, dateTo, sort, page: navigationPage + 1, pageSize: navigationPageSize }],
+    queryFn: () =>
+      api.listDreamEntries({
+        q: q || undefined,
+        tags: selectedTags.length ? selectedTags : undefined,
+        date_from: dateFrom || undefined,
+        date_to: dateTo || undefined,
+        sort,
+        page: navigationPage + 1,
+        page_size: navigationPageSize,
+      }),
+    enabled: isLastOnPage,
+  });
+
+  let prevId: number | null = null;
+  let prevNavPage = navigationPage;
+  let nextId: number | null = null;
+  let nextNavPage = navigationPage;
+
+  if (currentIndex >= 0) {
+    if (currentIndex > 0) {
+      prevId = items[currentIndex - 1].id;
+    } else if (isFirstOnPage && prevPageQuery.data) {
+      const prevItems = prevPageQuery.data.items;
+      if (prevItems.length > 0) {
+        prevId = prevItems[prevItems.length - 1].id;
+        prevNavPage = navigationPage - 1;
+      }
+    }
+
+    if (currentIndex < items.length - 1) {
+      nextId = items[currentIndex + 1].id;
+    } else if (isLastOnPage && nextPageQuery.data) {
+      const nextItems = nextPageQuery.data.items;
+      if (nextItems.length > 0) {
+        nextId = nextItems[0].id;
+        nextNavPage = navigationPage + 1;
+      }
+    }
+  }
+
+  const baseParams = useMemo(() => {
+    const paramsForNav = new URLSearchParams();
+    if (q) paramsForNav.set("q", q);
+    selectedTags.forEach((tag) => paramsForNav.append("tags", tag));
+    if (dateFrom) paramsForNav.set("date_from", dateFrom);
+    if (dateTo) paramsForNav.set("date_to", dateTo);
+    paramsForNav.set("sort", sort);
+    paramsForNav.set("page_size", String(navigationPageSize));
+    if (addToDraftId) paramsForNav.set("addToDraft", addToDraftId);
+    if (addToOrderId) paramsForNav.set("orderId", addToOrderId);
+    if (returnToOrderId) paramsForNav.set("returnToOrder", returnToOrderId);
+    if (returnIds) paramsForNav.set("returnIds", returnIds);
+    return paramsForNav;
+  }, [addToDraftId, addToOrderId, dateFrom, dateTo, navigationPageSize, q, returnIds, returnToOrderId, selectedTags, sort]);
+
+  function buildNavUrl(id: number, navPage: number, navDirection: "prev" | "next") {
+    const paramsForNav = new URLSearchParams(baseParams);
+    paramsForNav.set("page", String(navPage));
+    paramsForNav.set("nav", navDirection);
+    return `/dreams/${id}?${paramsForNav.toString()}`;
+  }
+
+  const prevHref = prevId ? buildNavUrl(prevId, prevNavPage, "prev") : null;
+  const nextHref = nextId ? buildNavUrl(nextId, nextNavPage, "next") : null;
+
+  useEffect(() => {
+    setIsNavigating(false);
+    if (navigationTimeoutRef.current) {
+      window.clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = null;
+    }
+  }, [dreamId]);
+
+  useEffect(() => {
+    return () => {
+      if (navigationTimeoutRef.current) {
+        window.clearTimeout(navigationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  function navigateWithFade(href: string | null) {
+    if (!href || isNavigating) {
+      return;
+    }
+
+    setIsNavigating(true);
+    if (navigationTimeoutRef.current) {
+      window.clearTimeout(navigationTimeoutRef.current);
+    }
+    navigationTimeoutRef.current = window.setTimeout(() => {
+      router.push(href);
+    }, DETAIL_LEAVE_DURATION_MS);
+  }
+
+  useEffect(() => {
+    if (prevHref) {
+      router.prefetch(prevHref);
+    }
+    if (nextHref) {
+      router.prefetch(nextHref);
+    }
+  }, [nextHref, prevHref, router]);
+
+  const dream = dreamQuery.data;
+
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between gap-4">
+        <Link href={archiveHref} className="secondary-button inline-flex items-center gap-2">
+          <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+            <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          이전 화면으로
+        </Link>
+
+        <div className="flex items-center gap-2">
+          {prevHref ? (
+            <button
+              type="button"
+              onClick={() => navigateWithFade(prevHref)}
+              disabled={isNavigating}
+              className="secondary-button inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                <path d="M12.5 5L7.5 10L12.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              이전
+            </button>
+          ) : null}
+
+          {nextHref ? (
+            <button
+              type="button"
+              onClick={() => navigateWithFade(nextHref)}
+              disabled={isNavigating}
+              className="secondary-button inline-flex items-center gap-2 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              다음
+              <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                <path d="M7.5 5L12.5 10L7.5 15" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          ) : null}
         </div>
-      </section>
+      </div>
+
+      {dreamQuery.isError || (!dreamQuery.isLoading && !dream) ? (
+        <StatePanel title="꿈 이야기를 찾을 수 없어요" description="이미 삭제되었거나 잘못된 주소로 접근한 것 같아요." />
+      ) : dream ? (
+        <DreamContent
+          key={`${dreamId}-${searchParams.get("nav") ?? "initial"}`}
+          dream={dream}
+          isLeaving={isNavigating}
+          returnIds={returnIds}
+          isAddMode={isAddMode}
+        />
+      ) : (
+        <DreamContentPlaceholder />
+      )}
     </div>
   );
 }

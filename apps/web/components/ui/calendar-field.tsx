@@ -3,7 +3,7 @@
 import { createPortal } from "react-dom";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
-const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
 type CalendarCell = {
   iso: string | null;
@@ -165,7 +165,7 @@ export function CalendarField({
         ref={triggerRef}
         type="button"
         className={`field-input relative flex min-h-[50px] w-full items-center justify-between gap-4 pr-12 text-left ${
-          open ? "bg-white/88 shadow-[0_0_0_4px_rgba(232,222,253,0.42)]" : ""
+          open ? "bg-white/88" : ""
         }`}
         onClick={() => setOpen((current) => !current)}
       >
@@ -184,7 +184,7 @@ export function CalendarField({
         ? createPortal(
             <div
               ref={menuRef}
-              className="dropdown-popover absolute z-[40] overflow-hidden rounded-[22px] border border-[rgba(122,97,146,0.14)] bg-[rgba(255,255,255,0.96)] p-3.5 shadow-[0_24px_56px_rgba(114,91,125,0.16)] backdrop-blur-xl"
+              className="dropdown-popover absolute z-[40] overflow-hidden rounded-[22px] border border-[rgba(122,97,146,0.12)] bg-[rgba(255,255,255,0.96)] p-3.5 shadow-none backdrop-blur-xl"
               style={{
                 top: `${menuStyle.top}px`,
                 left: `${menuStyle.left}px`,
@@ -198,7 +198,7 @@ export function CalendarField({
                   onClick={() =>
                     setDisplayMonth((current) => new Date(current.getFullYear(), current.getMonth() - 1, 1))
                   }
-                  aria-label="Previous month"
+                  aria-label="이전 달"
                 >
                   <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M11.75 5.5L7.25 10L11.75 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -213,7 +213,7 @@ export function CalendarField({
                   onClick={() =>
                     setDisplayMonth((current) => new Date(current.getFullYear(), current.getMonth() + 1, 1))
                   }
-                  aria-label="Next month"
+                  aria-label="다음 달"
                 >
                   <svg viewBox="0 0 20 20" className="h-4 w-4" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M8.25 5.5L12.75 10L8.25 14.5" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -221,7 +221,7 @@ export function CalendarField({
                 </button>
               </div>
 
-              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--muted)]">
+              <div className="grid grid-cols-7 gap-1.5 text-center text-[11px] font-semibold tracking-[0.16em] text-[var(--muted)]">
                 {weekdays.map((weekday) => (
                   <span key={weekday} className="py-1.5">
                     {weekday}
@@ -244,7 +244,7 @@ export function CalendarField({
                       type="button"
                       className={`h-9 rounded-full text-[13px] transition ${
                         active
-                          ? "bg-[var(--accent)] text-white shadow-[0_12px_24px_rgba(108,95,142,0.2)]"
+                          ? "bg-[linear-gradient(135deg,#6c618a_0%,#7e73a0_48%,#9389b7_100%)] text-white"
                           : isToday
                             ? "border border-[rgba(108,95,142,0.18)] bg-[rgba(232,222,253,0.5)] text-[var(--accent-strong)]"
                             : "text-[var(--muted-strong)] hover:bg-[rgba(245,241,251,0.9)]"
@@ -271,7 +271,7 @@ export function CalendarField({
                     setOpen(false);
                   }}
                 >
-                  Today
+                  오늘
                 </button>
 
                 {value ? (
@@ -283,7 +283,7 @@ export function CalendarField({
                       setOpen(false);
                     }}
                   >
-                    Clear
+                    지우기
                   </button>
                 ) : (
                   <span />

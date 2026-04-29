@@ -9,14 +9,7 @@ import { StatePanel } from "@/components/ui/state-panel";
 import { TagPill } from "@/components/ui/tag-pill";
 import { api } from "@/lib/api";
 import { DreamEntrySummary } from "@/lib/types";
-import { coverThemeClasses, formatDate, resolveMediaUrl } from "@/lib/utils";
-
-const coverThemes = [
-  { value: "midnight-blue", label: "Cloudscape" },
-  { value: "starlit-plum", label: "Velvet Night" },
-  { value: "cream-dusk", label: "Dawn Mist" },
-  { value: "emerald-night", label: "Emerald Moss" },
-];
+import { COVER_THEMES, coverThemeClasses, formatDate, resolveMediaUrl } from "@/lib/utils";
 
 export function NewBookDraftClient() {
   const router = useRouter();
@@ -30,9 +23,9 @@ export function NewBookDraftClient() {
     [searchParams],
   );
 
-  const [title, setTitle] = useState("밤의 장면을 엮은 한 권");
-  const [subtitle, setSubtitle] = useState("꿈에서만 지나간 장면들의 기록");
-  const [coverPhrase, setCoverPhrase] = useState("희미해지기 전에 붙잡아 둔 꿈의 조각들");
+  const [title, setTitle] = useState("밤의 장면을 모은 책");
+  const [subtitle, setSubtitle] = useState("꿈속에서만 만난 장면들의 기록");
+  const [coverPhrase, setCoverPhrase] = useState("사라지기 전에 붙잡아 둔 꿈의 조각들");
   const [coverTheme, setCoverTheme] = useState("midnight-blue");
   const [localError, setLocalError] = useState<string | null>(null);
   const [orderedIds, setOrderedIds] = useState<number[]>(ids);
@@ -78,11 +71,11 @@ export function NewBookDraftClient() {
   if (!ids.length) {
     return (
       <StatePanel
-        title="선택된 꿈일기가 없습니다"
-        description="My Books에서 여러 꿈일기를 고른 뒤 책 초안 만들기로 넘어오면 여기에서 책 초안을 구성할 수 있습니다."
+        title="선택된 꿈일기가 없어요"
+        description="책 만들기 페이지에서 꿈을 먼저 고른 뒤 다시 와주세요."
         action={
           <Link href="/book-drafts" className="primary-button">
-            My Books로 이동
+            책 만들기로 이동
           </Link>
         }
       />
@@ -92,28 +85,28 @@ export function NewBookDraftClient() {
   return (
     <div className="space-y-10">
       <section className="text-center">
-        <p className="section-kicker">Curate Your Collection</p>
+        <p className="section-kicker">Book Draft</p>
         <h1 className="page-title mt-4">Curate Your Collection</h1>
         <p className="page-copy mx-auto mt-5 max-w-2xl italic">
-          선택한 꿈일기를 한 권의 흐름으로 묶고, 표지와 순서를 다듬은 뒤 Book Draft를 생성합니다.
+          선택한 꿈일기들을 한 권으로 엮어보세요. 제목과 표지 문구를 정하고, 읽기 좋은 순서로 차분히 다듬을 수 있어요.
         </p>
       </section>
 
       <div className="grid gap-12 lg:grid-cols-[0.88fr_1.12fr]">
         <aside className="space-y-8">
           <section className="glass-card p-8">
-            <h2 className="font-display text-3xl text-[var(--accent-strong)]">Book Details</h2>
+            <h2 className="font-display text-3xl text-[var(--accent-strong)]">책 정보</h2>
             <div className="mt-8 space-y-6">
               <div>
-                <label className="field-label">Main Title</label>
+                <label className="field-label">책 제목</label>
                 <input className="field-input font-display text-xl" value={title} onChange={(event) => setTitle(event.target.value)} />
               </div>
               <div>
-                <label className="field-label">Subtitle</label>
+                <label className="field-label">부제</label>
                 <input className="field-input italic" value={subtitle} onChange={(event) => setSubtitle(event.target.value)} />
               </div>
               <div>
-                <label className="field-label">Cover Phrase</label>
+                <label className="field-label">표지 문구</label>
                 <textarea
                   className="field-input min-h-[120px] resize-none italic"
                   value={coverPhrase}
@@ -124,9 +117,9 @@ export function NewBookDraftClient() {
           </section>
 
           <section className="glass-card p-8">
-            <h2 className="font-display text-3xl text-[var(--accent-strong)]">Cover Theme</h2>
+            <h2 className="font-display text-3xl text-[var(--accent-strong)]">표지 테마</h2>
             <div className="mt-8 grid grid-cols-2 gap-4 xl:grid-cols-4">
-              {coverThemes.map((theme) => {
+              {COVER_THEMES.map((theme) => {
                 const active = coverTheme === theme.value;
                 return (
                   <button
@@ -151,7 +144,7 @@ export function NewBookDraftClient() {
             <div className={`cover-preview aspect-[4/5] bg-gradient-to-br ${coverThemeClasses(coverTheme)} p-8`}>
               <div className="flex h-full flex-col justify-between rounded-[22px] border border-white/50 bg-white/25 p-6 backdrop-blur">
                 <div>
-                  <p className="section-kicker">Preview</p>
+                  <p className="section-kicker">미리보기</p>
                   <h3 className="mt-4 font-display text-4xl leading-tight text-[var(--accent-strong)]">{title}</h3>
                   <p className="mt-3 italic text-[var(--muted-strong)]">{subtitle}</p>
                 </div>
@@ -163,10 +156,10 @@ export function NewBookDraftClient() {
 
             <div className="mt-6 flex flex-col gap-3">
               <button className="primary-button w-full py-4" onClick={() => createMutation.mutate()} disabled={createMutation.isPending}>
-                {createMutation.isPending ? "초안을 생성하는 중..." : "Generate Book Draft"}
+                {createMutation.isPending ? "초안을 만드는 중..." : "책 초안 만들기"}
               </button>
-              <Link href="/dreams" className="secondary-button w-full py-4">
-                Add More Entries
+              <Link href="/book-drafts" className="secondary-button w-full py-4">
+                꿈 다시 고르기
               </Link>
             </div>
           </section>
@@ -175,14 +168,14 @@ export function NewBookDraftClient() {
         <section>
           <div className="mb-8 flex items-center justify-between gap-4 px-2">
             <div>
-              <p className="section-kicker">Selected Entries</p>
-              <h2 className="mt-3 font-display text-4xl text-[var(--accent-strong)]">Included Dreams</h2>
+              <p className="section-kicker">선택한 꿈</p>
+              <h2 className="mt-3 font-display text-4xl text-[var(--accent-strong)]">책에 담길 순서</h2>
             </div>
-            <span className="rounded-full bg-white/70 px-4 py-2 text-sm text-[var(--muted-strong)]">{orderedDreams.length} entries</span>
+            <span className="rounded-full bg-white/70 px-4 py-2 text-sm text-[var(--muted-strong)]">{orderedDreams.length}개</span>
           </div>
 
           {dreamsQuery.isLoading ? (
-            <StatePanel title="선택한 꿈일기를 정리하는 중" description="책 흐름에 맞는 순서 편집 화면을 준비하고 있습니다." />
+            <StatePanel title="선택한 꿈을 정리하는 중" description="순서를 편집할 수 있도록 꿈일기 목록을 준비하고 있어요." />
           ) : (
             <div className="space-y-5">
               {orderedDreams.map((dream, index) => (
@@ -193,15 +186,15 @@ export function NewBookDraftClient() {
                   }`}
                 >
                   <div className="text-sm text-[var(--muted)] md:w-[110px]">
-                    <p className="font-semibold uppercase tracking-[0.18em] text-[var(--accent-strong)]">Scene {String(index + 1).padStart(2, "0")}</p>
+                    <p className="font-semibold tracking-[0.18em] text-[var(--accent-strong)]">장면 {String(index + 1).padStart(2, "0")}</p>
                     <p className="mt-2 italic">{formatDate(dream.dream_date)}</p>
                   </div>
 
                   <div className="flex min-w-0 flex-1 items-center gap-5">
                     <img
-                      src={resolveMediaUrl(dream.representative_image_url)}
+                      src={resolveMediaUrl(dream.image_url)}
                       alt={dream.title}
-                      className="h-28 w-24 rounded-[18px] object-cover shadow-[0_20px_30px_rgba(108,95,142,0.12)]"
+                      className="h-28 w-24 rounded-[18px] object-cover"
                     />
 
                     <div className="min-w-0 flex-1">
@@ -228,7 +221,7 @@ export function NewBookDraftClient() {
                         })
                       }
                     >
-                      Up
+                      위로
                     </button>
                     <button
                       type="button"
@@ -242,7 +235,7 @@ export function NewBookDraftClient() {
                         })
                       }
                     >
-                      Down
+                      아래로
                     </button>
                   </div>
                 </article>

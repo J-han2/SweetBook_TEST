@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -10,8 +10,9 @@ from app.core.enums import BookDraftStatus, OrderStatus
 from app.models.book_draft import BookDraft, BookDraftItem
 from app.models.dream_entry import DreamEntry
 from app.models.order import Order
+from app.models.order_history import OrderStatusHistory
 from app.models.tag import Tag
-from app.services.content_enrichment import build_mood_summary, pick_representative_image
+from app.services.content_enrichment import pick_representative_image
 from app.services.seed_data import SEED_BOOK_DRAFTS, SEED_DREAMS, SEED_ORDERS
 
 
@@ -28,15 +29,12 @@ def seed_database(session: Session) -> None:
 
     for dream in SEED_DREAMS:
         tag_names = dream["tags"]
-        uploaded_image_url = dream.get("uploaded_image_url")
+        image_url = dream.get("image_url")
         entry = DreamEntry(
             title=dream["title"],
             dream_date=date.fromisoformat(dream["dream_date"]),
             content=dream["content"],
-            memo=dream["memo"],
-            uploaded_image_url=uploaded_image_url,
-            representative_image_url=pick_representative_image(tag_names, uploaded_image_url),
-            mood_summary=build_mood_summary(tag_names),
+            image_url=pick_representative_image(tag_names, image_url),
             is_seed=True,
         )
         entry.tags = [tag_map[name] for name in tag_names]
@@ -72,9 +70,38 @@ def seed_database(session: Session) -> None:
             book_draft_id=draft_map[order_seed["book_title"]].id,
             quantity=order_seed["quantity"],
             status=OrderStatus(order_seed["status"]),
+            recipient_name=order_seed.get("recipient_name"),
+            recipient_phone=order_seed.get("recipient_phone"),
+            shipping_address=order_seed.get("shipping_address"),
+            shipping_address_detail=order_seed.get("shipping_address_detail"),
             export_version="1.0",
+            admin_memo=order_seed.get("admin_memo"),
+            created_at=datetime.fromisoformat(order_seed["created_at"]) if order_seed.get("created_at") else None,
+            updated_at=datetime.fromisoformat(order_seed["updated_at"]) if order_seed.get("updated_at") else None,
         )
         session.add(order)
+        session.flush()
+
+        if order_seed.get("history"):
+            for history_seed in order_seed["history"]:
+                session.add(
+                    OrderStatusHistory(
+                        order_id=order.id,
+                        from_status=history_seed.get("from_status"),
+                        to_status=history_seed["to_status"],
+                        note=history_seed.get("note"),
+                        changed_at=datetime.fromisoformat(history_seed["changed_at"]) if history_seed.get("changed_at") else None,
+                    )
+                )
+        elif order.status != OrderStatus.PENDING:
+            session.add(
+                OrderStatusHistory(
+                    order_id=order.id,
+                    from_status=OrderStatus.PENDING.value,
+                    to_status=order.status.value,
+                    note="seed",
+                )
+            )
 
     session.commit()
 

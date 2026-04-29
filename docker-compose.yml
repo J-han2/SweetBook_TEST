@@ -3,6 +3,7 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    restart: unless-stopped
     environment:
       DATABASE_URL: ${DATABASE_URL:-sqlite:////app/data/dreamarchive.db}
       FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:3000}
@@ -10,8 +11,8 @@ services:
       LLM_CHAT_FORMAT: ${LLM_CHAT_FORMAT:-chatml}
       LLM_N_CTX: ${LLM_N_CTX:-2048}
     volumes:
-      - ./apps/api/data:/app/data
-      - ./apps/api/storage:/app/storage
+      - api_data:/app/data
+      - api_runtime_uploads:/app/storage/uploads/runtime
     ports:
       - "${API_PORT:-8000}:8000"
     healthcheck:
@@ -29,16 +30,21 @@ services:
       context: ./apps/web
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
+    restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8000}
     depends_on:
       api:
         condition: service_healthy
-    command: >
-      sh -c "until wget -qO- http://api:8000/health >/dev/null; do
-      echo 'waiting for api';
-      sleep 2;
-      done &&
-      HOSTNAME=0.0.0.0 PORT=3000 node .next/standalone/server.js"
     ports:
       - "${WEB_PORT:-3000}:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+volumes:
+  api_data:
+  api_runtime_uploads:

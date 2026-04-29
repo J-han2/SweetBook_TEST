@@ -10,12 +10,9 @@ class DreamEntrySummaryRead(ORMModel):
     id: int
     title: str
     dream_date: date
-    memo: str | None
     created_at: datetime
     updated_at: datetime
-    representative_image_url: str | None
-    uploaded_image_url: str | None
-    mood_summary: str | None
+    image_url: str | None
     is_seed: bool
     content_preview: str
     tags: list[TagRead]
@@ -26,12 +23,9 @@ class DreamEntryDetailRead(ORMModel):
     title: str
     dream_date: date
     content: str
-    memo: str | None
     created_at: datetime
     updated_at: datetime
-    representative_image_url: str | None
-    uploaded_image_url: str | None
-    mood_summary: str | None
+    image_url: str | None
     is_seed: bool
     tags: list[TagRead]
 
