@@ -1,5 +1,5 @@
 param(
-  [string[]]$ComposeArgs = @("up")
+  [string[]]$ComposeArgs = @("up", "--build")
 )
 
 $ErrorActionPreference = "Stop"

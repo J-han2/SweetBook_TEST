@@ -1,6 +1,6 @@
 import { BookDraftStatus, OrderStatus } from "@/lib/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const API_PROXY_BASE_URL = "/api-proxy";
 
 export const COVER_THEMES = [
   { value: "midnight-blue", label: "한밤의 푸른빛" },
@@ -73,7 +73,7 @@ export function resolveMediaUrl(value: string | null | undefined, fallback = "/p
   }
 
   if (value.startsWith("/media/")) {
-    return `${API_BASE_URL}${value}`;
+    return `${API_PROXY_BASE_URL}${value}`;
   }
 
   return value;

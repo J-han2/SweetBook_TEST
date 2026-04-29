@@ -2,275 +2,92 @@
 
 DreamArchive는 꿈을 기록하고, 다시 찾아보고, 여러 기록을 모아 책 초안과 주문으로 확장할 수 있는 서비스입니다.
 
-이 프로젝트는 다음 구성으로 실행됩니다.
+- 프론트엔드: Next.js
+- 백엔드: FastAPI
+- 데이터베이스: SQLite
+- 로컬 LLM: GGUF 모델 포함
 
-- FastAPI 백엔드
-- Next.js 프론트엔드
-- SQLite 데이터베이스
-- 로컬 LLM GGUF 모델
-
-중요:
-
-- 모델 파일은 Git LFS로 관리됩니다.
-- 반드시 `git clone` 후 `git lfs pull`까지 실행해야 합니다.
-- GitHub 웹에서 ZIP만 다운로드하면 모델 파일이 빠져 실행에 실패할 수 있습니다.
-- 첫 빌드 시에는 Docker Hub에서 베이스 이미지를 받아와야 하므로 인터넷 연결이 필요합니다.
-
-저장소 주소:
-
-```text
-https://github.com/J-han2/SweetBook_TEST.git
-```
-
-실행 후 접속 주소:
+## 실행 주소
 
 - 프론트엔드: `http://localhost:3000`
-- 백엔드 Swagger: `http://localhost:8000/docs`
-- 백엔드 Health Check: `http://localhost:8000/health`
+- 백엔드 문서: `http://localhost:8000/docs`
+- 백엔드 헬스 체크: `http://localhost:8000/health`
 
-## 포트 변경 방법
-
-기본 포트는 아래와 같습니다.
-
-- 프론트엔드: `3000`
-- 백엔드: `8000`
-
-포트를 바꾸려면 프로젝트 루트의 `.env` 파일에서 아래 값을 수정하면 됩니다.
-
-```env
-WEB_PORT=3000
-API_PORT=8000
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8000
-FRONTEND_ORIGIN=http://localhost:3000
-```
-
-각 값의 의미:
-
-- `WEB_PORT`: 브라우저에서 접속할 프론트엔드 포트
-- `API_PORT`: 브라우저/프론트엔드가 접속할 백엔드 포트
-- `NEXT_PUBLIC_API_BASE_URL`: 프론트엔드가 호출할 백엔드 주소
-- `FRONTEND_ORIGIN`: 백엔드 CORS 허용 주소
-
-예를 들어 프론트를 `3100`, 백엔드를 `8100`으로 바꾸고 싶다면:
-
-```env
-WEB_PORT=3100
-API_PORT=8100
-NEXT_PUBLIC_API_BASE_URL=http://localhost:8100
-FRONTEND_ORIGIN=http://localhost:3100
-```
-
-포트를 변경한 뒤에는 컨테이너를 다시 올려야 합니다.
-
-일반 재실행:
-
-```bash
-docker compose down
-docker compose up -d
-```
-
-이미지까지 다시 빌드해야 하는 경우:
-
-```bash
-docker compose down
-docker compose up --build -d
-```
-
-Windows PowerShell에서는:
-
-```powershell
-powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('down') }"
-powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '-d') }"
-```
-
-빌드까지 다시 하려면:
-
-```powershell
-powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('down') }"
-powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '--build', '-d') }"
-```
-
-## 공통 준비 사항
+## 1. 먼저 설치할 것
 
 모든 운영체제에서 아래 도구가 필요합니다.
 
-- `git`
-- `git lfs`
-- `docker`
-- `docker compose`
-
-권장 환경:
-
-- Windows: Docker Desktop + PowerShell
-- Linux: Docker Engine + Docker Compose plugin
-- macOS: Docker Desktop
-
-## Docker 설치 안내
-
-아직 Docker가 설치되지 않았다면, 아래 순서대로 먼저 준비해 주세요.
+- Git
+- Git LFS
+- Docker
+- Docker Compose
 
 ### Windows
 
-1. Docker Desktop for Windows 설치  
-   공식 문서: https://docs.docker.com/desktop/setup/install/windows-install/
-2. 설치 과정에서 WSL 2 기반 사용을 권장합니다.
-3. 설치 후 Docker Desktop을 실행합니다.
-4. PowerShell에서 아래 명령으로 동작을 확인합니다.
+1. Docker Desktop 설치  
+   https://docs.docker.com/desktop/setup/install/windows-install/
+2. Git for Windows 설치  
+   https://git-scm.com/download/win
+3. Git LFS 설치  
+   https://git-lfs.com/
+
+설치 확인:
 
 ```powershell
+git --version
+git lfs version
 docker version
 docker compose version
 ```
 
 ### macOS
 
-1. Docker Desktop for Mac 설치  
-   공식 문서: https://docs.docker.com/desktop/setup/install/mac-install/
-2. Docker Desktop을 실행합니다.
-3. 터미널에서 아래 명령으로 동작을 확인합니다.
+1. Docker Desktop 설치  
+   https://docs.docker.com/desktop/setup/install/mac-install/
+2. Git 설치  
+   https://git-scm.com/download/mac
+3. Git LFS 설치  
+   https://git-lfs.com/
+
+설치 확인:
 
 ```bash
+git --version
+git lfs version
 docker version
 docker compose version
 ```
 
 ### Linux
 
-Linux는 배포판마다 설치 방법이 다릅니다. 이 README는 Ubuntu 계열을 기준으로 안내합니다.
+Ubuntu 기준 권장 문서:
 
-1. Docker Engine 설치  
-   공식 문서: https://docs.docker.com/engine/install/ubuntu/
-2. Docker Compose plugin 설치  
-   공식 문서: https://docs.docker.com/compose/install/linux/
-3. 설치 후 아래 명령으로 동작을 확인합니다.
+- Docker Engine: https://docs.docker.com/engine/install/ubuntu/
+- Docker Compose plugin: https://docs.docker.com/compose/install/linux/
+- Git LFS: https://git-lfs.com/
+
+설치 확인:
 
 ```bash
+git --version
+git lfs version
 docker version
 docker compose version
 ```
 
-4. 현재 사용자로 `docker` 명령을 바로 쓰려면 필요에 따라 Docker post-installation 설정을 추가로 진행해 주세요.
-
-### Git LFS 설치 확인
-
-이 프로젝트는 모델 파일을 Git LFS로 받습니다. Docker 설치 후 Git LFS도 함께 준비되어 있어야 합니다.
-
-공식 사이트: https://git-lfs.com/
-
-확인 명령:
-
-```bash
-git lfs version
-```
-
-## 1. Windows 실행 방법
-
-권장 방식은 PowerShell에서 프로젝트 루트로 이동한 뒤 실행하는 것입니다.
-
-### 1-1. 저장소 클론
-
-```powershell
-git clone https://github.com/J-han2/SweetBook_TEST.git
-cd SweetBook_TEST
-```
-
-### 1-2. Git LFS 초기화 및 모델 받기
-
-최초 1회:
-
-```powershell
-git lfs install
-```
-
-모델 파일 받기:
-
-```powershell
-git lfs pull
-```
-
-모델 파일 확인:
-
-```powershell
-Get-Item .\models\qwen2.5-0.5b-instruct-q4_k_m.gguf
-```
-
-정상이라면 수백 MB 크기의 파일이 보여야 합니다.
-
-### 1-3. 환경 변수 파일 생성
-
-```powershell
-Copy-Item .env.example .env
-```
-
-기본값 그대로 실행 가능합니다.
-
-### 1-4. 배포용 실행
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
-```
-
-이 스크립트는 다음 순서로 동작합니다.
-
-1. Windows Docker daemon 연결 시도
-2. 연결 실패 시 WSL 내부 Docker로 자동 fallback
-3. `docker compose up --build -d` 실행
-4. API와 프론트엔드가 실제로 응답할 때까지 대기
-
-참고:
-
-- `Local Docker daemon was not reachable. Falling back to WSL Docker...` 문구는 오류가 아니라 자동 전환 안내입니다.
-- 이 문구 뒤에 컨테이너가 계속 올라오면 정상입니다.
-- 기본 실행은 항상 `--build`를 포함하므로, 같은 PC에 예전 이미지가 남아 있어도 최신 코드 기준으로 다시 빌드됩니다.
-
-### 1-5. 실행 확인
-
-```powershell
-Invoke-WebRequest http://localhost:8000/health -UseBasicParsing
-Invoke-WebRequest http://localhost:3000 -UseBasicParsing
-```
-
-그리고 브라우저에서 아래 주소를 엽니다.
-
-- `http://localhost:3000`
-- `http://localhost:8000/docs`
-
-### 1-6. Windows에서 PSSecurityException 이 발생하는 경우
-
-PowerShell 실행 정책 때문에 `.ps1` 스크립트가 차단된 것입니다.
-
-README의 Windows 명령은 모두 아래 방식으로 실행하면 됩니다.
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
-```
-
-진단 스크립트도 같은 방식으로 실행합니다.
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\docker-doctor.ps1
-```
-
-### 1-7. Docker 연결 진단
-
-Windows에서 Docker 연결이 되지 않으면:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\docker-doctor.ps1
-```
-
-## 2. Linux 실행 방법
-
-예시는 Ubuntu 기준입니다.
-
-### 2-1. 저장소 클론
+## 2. 저장소 받기
 
 ```bash
 git clone https://github.com/J-han2/SweetBook_TEST.git
 cd SweetBook_TEST
 ```
 
-### 2-2. Git LFS 초기화 및 모델 받기
+권장:
+
+- Windows에서는 `OneDrive\Desktop` 같은 동기화 폴더보다 `C:\dev\SweetBook_TEST` 같은 일반 경로를 권장합니다.
+- 동기화 폴더에서는 checkout과 LFS 파일 처리 속도가 크게 느려질 수 있습니다.
+
+### Git LFS 초기화와 모델 받기
 
 최초 1회:
 
@@ -287,119 +104,139 @@ git lfs pull
 모델 파일 확인:
 
 ```bash
-ls -lh models/qwen2.5-0.5b-instruct-q4_k_m.gguf
-```
-
-### 2-3. 환경 변수 파일 생성
-
-```bash
-cp .env.example .env
-```
-
-### 2-4. 배포용 실행
-
-```bash
-docker compose up --build -d
-```
-
-설명:
-
-- 처음 실행이고 이미지가 없으면 Docker가 이미지를 빌드합니다.
-- 이미 한 번 빌드가 끝난 환경에서도 최신 소스를 기준으로 다시 빌드합니다.
-
-### 2-5. 실행 확인
-
-```bash
-docker compose ps
-curl http://localhost:8000/health
-curl -I http://localhost:3000
-```
-
-정상이라면:
-
-- API health 응답: `{"status":"ok"}`
-- 프론트엔드 응답: `HTTP/1.1 200 OK`
-
-## 3. macOS 실행 방법
-
-Apple Silicon / Intel 모두 같은 방식으로 실행할 수 있습니다.
-
-### 3-1. 저장소 클론
-
-```bash
-git clone https://github.com/J-han2/SweetBook_TEST.git
-cd SweetBook_TEST
-```
-
-### 3-2. Git LFS 초기화 및 모델 받기
-
-최초 1회:
-
-```bash
-git lfs install
-```
-
-모델 파일 받기:
-
-```bash
-git lfs pull
-```
-
-모델 파일 확인:
-
-```bash
-ls -lh models/qwen2.5-0.5b-instruct-q4_k_m.gguf
-```
-
-### 3-3. 환경 변수 파일 생성
-
-```bash
-cp .env.example .env
-```
-
-### 3-4. 배포용 실행
-
-```bash
-docker compose up --build -d
-```
-
-- 기본 실행은 항상 `--build`를 포함하므로, 예전 이미지가 남아 있어도 최신 소스를 기준으로 다시 빌드합니다.
-
-### 3-5. 실행 확인
-
-```bash
-docker compose ps
-curl http://localhost:8000/health
-curl -I http://localhost:3000
-```
-
-## 재실행 / 종료 / 초기화
-
-### 이미 한 번 빌드한 뒤 빠르게 다시 실행
-
-```bash
-docker compose up -d
+ls models
 ```
 
 Windows PowerShell에서는:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '-d') }"
+Get-Item .\models\qwen2.5-0.5b-instruct-q4_k_m.gguf
 ```
 
-### 코드 변경으로 이미지를 다시 빌드해야 할 때
+## 3. 환경 변수 파일 만들기
 
-Linux / macOS:
+기본 설정으로 바로 실행할 수 있습니다.
 
-```bash
-docker compose up --build -d
-```
-
-Windows PowerShell:
+### Windows
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @('up', '--build', '-d') }"
+Copy-Item .env.example .env
 ```
+
+### Linux / macOS
+
+```bash
+cp .env.example .env
+```
+
+## 4. 바로 실행하기
+
+현재 배포용 `docker-compose.yml`은 사전 빌드 이미지를 내려받아 실행하는 구조입니다.  
+즉, 일반 사용자는 로컬에서 직접 빌드하지 않아도 됩니다.
+
+### Windows
+
+PowerShell 실행 정책 오류를 피하기 위해 아래 명령을 그대로 사용합니다.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
+```
+
+동작 방식:
+
+1. Windows Docker daemon 연결 시도
+2. 실패하면 WSL Docker로 자동 전환
+3. 최신 배포 이미지를 pull
+4. 컨테이너 실행 후 서비스 응답까지 대기
+
+정상 종료 메시지:
+
+```text
+API and WEB are reachable.
+Frontend: http://localhost:3000
+Backend:  http://localhost:8000/docs
+```
+
+### Linux
+
+```bash
+docker compose up -d
+```
+
+### macOS
+
+```bash
+docker compose up -d
+```
+
+## 5. 실행 확인
+
+브라우저에서 아래 주소를 엽니다.
+
+- `http://localhost:3000`
+- `http://localhost:8000/docs`
+
+또는 터미널에서 확인합니다.
+
+```bash
+docker compose ps
+curl http://localhost:8000/health
+curl -I http://localhost:3000
+```
+
+정상 응답 예시:
+
+- API: `{"status":"ok"}`
+- WEB: `HTTP/1.1 200 OK`
+
+## 6. 포트 변경 방법
+
+포트를 바꾸려면 `.env` 파일의 값을 수정합니다.
+
+```env
+WEB_PORT=3000
+API_PORT=8000
+FRONTEND_ORIGIN=http://localhost:3000
+INTERNAL_API_BASE_URL=http://api:8000
+IMAGE_TAG=latest
+```
+
+설명:
+
+- `WEB_PORT`: 브라우저에서 접속할 프론트엔드 포트
+- `API_PORT`: 브라우저 또는 외부 도구에서 접속할 백엔드 포트
+- `FRONTEND_ORIGIN`: 백엔드 CORS 허용 주소
+- `INTERNAL_API_BASE_URL`: Docker 내부에서 웹이 API를 호출할 주소  
+  일반적으로 수정할 필요가 없습니다.
+- `IMAGE_TAG`: 배포 이미지 태그
+
+예시: 프론트 `3100`, 백엔드 `8100`
+
+```env
+WEB_PORT=3100
+API_PORT=8100
+FRONTEND_ORIGIN=http://localhost:3100
+INTERNAL_API_BASE_URL=http://api:8000
+IMAGE_TAG=latest
+```
+
+포트 변경 후 재실행:
+
+### Windows
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1 -ComposeArgs @('down')
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
+```
+
+### Linux / macOS
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+## 7. 종료 / 재시작 / 초기화
 
 ### 종료
 
@@ -407,23 +244,23 @@ powershell -ExecutionPolicy Bypass -Command "& { .\scripts\up.ps1 -ComposeArgs @
 docker compose down
 ```
 
-### 볼륨까지 포함해 완전 초기화
+### 다시 시작
+
+```bash
+docker compose up -d
+```
+
+### 볼륨까지 모두 초기화
 
 ```bash
 docker compose down -v
 ```
 
-초기화 후 다시 실행하면 seed 데이터가 새로 생성됩니다.
+초기화 후 다시 실행하면 시드 데이터가 새로 만들어집니다.
 
-## 개발용 실행 방법
+## 8. 개발용 실행
 
-개발용 구성은 `docker-compose.debug.yml`을 사용합니다.
-
-특징:
-
-- 소스 코드 바인드 마운트
-- API `--reload`
-- Web `next dev`
+개발용은 소스 바인드 마운트 + 로컬 빌드 + 핫 리로드 구조입니다.
 
 ### Windows
 
@@ -434,83 +271,64 @@ powershell -ExecutionPolicy Bypass -File .\scripts\up-debug.ps1
 ### Linux / macOS
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.debug.yml up
+docker compose -f docker-compose.yml -f docker-compose.debug.yml up --build
 ```
 
-## 현재 배포 구성 특징
+## 9. 관리자 페이지
 
-- API 이미지 안에 GGUF 모델이 포함됩니다.
-- 프론트는 production build 후 `next start`로 실행됩니다.
-- 프론트는 DB에 직접 접근하지 않고 백엔드 API만 호출합니다.
-- 데이터베이스와 업로드 파일은 Docker volume으로 유지됩니다.
+사용자 페이지 실행 후 `My Books` 화면에서 `관리자 페이지로 이동` 버튼을 누르면 `/admin`으로 들어갈 수 있습니다.
 
-사용되는 volume:
+## 10. 문제 해결
 
-- `sweetbook_test_api_data`
-- `sweetbook_test_api_runtime_uploads`
+### 1) PowerShell에서 PSSecurityException 발생
 
-## 트러블슈팅
+반드시 아래처럼 실행합니다.
 
-### 1. 모델 파일이 없다고 나오는 경우
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\up.ps1
+```
+
+### 2) `Local Docker daemon was not reachable. Falling back to WSL Docker...`
+
+오류가 아니라 자동 전환 안내입니다.  
+이후 컨테이너가 계속 올라오면 정상입니다.
+
+### 3) 이미지 pull 실패
+
+예시:
+
+- `failed to resolve source metadata`
+- `i/o timeout`
+- `no route to host`
+- `unauthorized`
+
+의미:
+
+- GHCR 또는 외부 레지스트리 네트워크 문제
+- 또는 Docker 로그인/접속 문제
+
+확인:
+
+```bash
+docker compose ps
+docker compose logs -f
+```
+
+Windows 진단:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\docker-doctor.ps1
+```
+
+### 4) 모델 파일이 없다고 나옴
+
+다시 실행:
 
 ```bash
 git lfs pull
 ```
 
-다시 실행한 뒤 모델 파일 크기를 확인하세요.
-
-### 2. `docker compose up --build -d` 중 베이스 이미지를 못 받는 경우
-
-예시 오류:
-
-- `failed to resolve source metadata for docker.io/...`
-- `dial tcp ...:443: i/o timeout`
-- `no route to host`
-
-이 경우는 프로젝트 코드 문제가 아니라 Docker Hub 네트워크 연결 문제입니다.
-
-확인:
-
-```bash
-docker compose build
-```
-
-조치:
-
-- 인터넷 연결 확인
-- Docker Desktop 재시작
-- VPN / 프록시 / 사내망 제한 확인
-- 잠시 후 다시 시도
-
-이미 한 번 빌드가 끝난 환경에서 빠르게 다시 켜기만 하려면:
-
-```bash
-docker compose up -d
-```
-
-로컬 캐시된 이미지로 재기동할 수 있습니다.  
-단, 최신 코드를 반영하려면 `docker compose up --build -d`를 사용해야 합니다.
-
-### 3. 컨테이너 상태 확인
-
-```bash
-docker compose ps
-```
-
-### 4. 로그 확인
-
-```bash
-docker compose logs -f
-```
-
-특정 서비스만 보려면:
-
-```bash
-docker compose logs -f api
-docker compose logs -f web
-```
-
-## 빠른 실행 요약
+## 11. 빠른 시작 요약
 
 ### Windows
 
@@ -531,5 +349,5 @@ cd SweetBook_TEST
 git lfs install
 git lfs pull
 cp .env.example .env
-docker compose up --build -d
+docker compose up -d
 ```

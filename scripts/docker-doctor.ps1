@@ -105,7 +105,7 @@ try {
 
 Write-Section "Result"
 if ($dockerDaemonAvailable) {
-  Write-Host "You can run 'docker-compose up --build' or 'docker compose up --build' from this repo." -ForegroundColor Green
+  Write-Host "You can run 'docker compose up -d' or '.\scripts\up.ps1' from this repo." -ForegroundColor Green
   exit 0
 }
 

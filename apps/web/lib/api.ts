@@ -14,7 +14,7 @@ import {
   TagPreviewResult,
 } from "@/lib/types";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+const API_BASE_URL = "/api-proxy";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -111,11 +111,12 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/api/dream-entries`, {
       method: "POST",
       body: formData,
+      cache: "no-store",
     });
 
     if (!response.ok) {
-      const payload = await response.json().catch(() => ({ detail: "꿈 기록을 저장하지 못했어요." }));
-      throw new Error(payload.detail ?? "꿈 기록을 저장하지 못했어요.");
+      const payload = await response.json().catch(() => ({ detail: "꿈 기록을 등록하지 못했어요." }));
+      throw new Error(payload.detail ?? "꿈 기록을 등록하지 못했어요.");
     }
 
     return response.json() as Promise<DreamEntryDetail>;
@@ -124,6 +125,7 @@ export const api = {
     const response = await fetch(`${API_BASE_URL}/api/dream-entries/${id}`, {
       method: "PATCH",
       body: formData,
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -133,7 +135,7 @@ export const api = {
 
     return response.json() as Promise<DreamEntryDetail>;
   },
-  async deleteDreamEntry(id: number) {
+  deleteDreamEntry(id: number) {
     return request<{ ok: boolean }>(`/api/dream-entries/${id}`, { method: "DELETE" });
   },
   listTags() {
@@ -257,7 +259,6 @@ export const api = {
     });
   },
 
-  // Admin APIs
   adminListOrders(params: {
     status?: OrderStatus[];
     q?: string;

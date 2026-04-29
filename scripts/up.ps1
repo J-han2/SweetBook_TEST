@@ -1,5 +1,5 @@
 param(
-  [string[]]$ComposeArgs = @("up", "--build", "-d")
+  [string[]]$ComposeArgs = @("up", "-d", "--pull", "always")
 )
 
 $ErrorActionPreference = "Stop"
@@ -58,12 +58,46 @@ function Convert-ToWslPath {
   return "/mnt/$drive$rest"
 }
 
+function Get-EnvFileValue {
+  param(
+    [string]$Key,
+    [string]$DefaultValue
+  )
+
+  $envValue = [Environment]::GetEnvironmentVariable($Key)
+  if (-not [string]::IsNullOrWhiteSpace($envValue)) {
+    return $envValue
+  }
+
+  $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
+  $envFile = Join-Path $repoRoot ".env"
+  if (-not (Test-Path $envFile)) {
+    return $DefaultValue
+  }
+
+  $line = Get-Content $envFile | Where-Object { $_ -match "^\s*$Key\s*=" } | Select-Object -First 1
+  if (-not $line) {
+    return $DefaultValue
+  }
+
+  $value = ($line -split "=", 2)[1].Trim()
+  if ([string]::IsNullOrWhiteSpace($value)) {
+    return $DefaultValue
+  }
+
+  return $value.Trim('"')
+}
+
 function Should-WaitForServices {
   return ($ComposeArgs.Count -gt 0 -and $ComposeArgs[0] -eq "up")
 }
 
-function Is-BuildMode {
-  return ($ComposeArgs -contains "--build")
+function Is-RefreshMode {
+  return (
+    ($ComposeArgs -contains "--build") -or
+    ($ComposeArgs -contains "--pull") -or
+    (($ComposeArgs | Where-Object { $_ -like "pull*" }).Count -gt 0)
+  )
 }
 
 function Test-HttpReady {
@@ -84,9 +118,12 @@ function Wait-ForServices {
     return
   }
 
+  $apiPort = Get-EnvFileValue -Key "API_PORT" -DefaultValue "8000"
+  $webPort = Get-EnvFileValue -Key "WEB_PORT" -DefaultValue "3000"
+
   $checks = @(
-    @{ Name = "API"; Url = "http://localhost:8000/health" },
-    @{ Name = "WEB"; Url = "http://localhost:3000" }
+    @{ Name = "API"; Url = "http://localhost:$apiPort/health" },
+    @{ Name = "WEB"; Url = "http://localhost:$webPort" }
   )
 
   foreach ($check in $checks) {
@@ -106,8 +143,8 @@ function Wait-ForServices {
   }
 
   Write-Host "API and WEB are reachable." -ForegroundColor Green
-  Write-Host "Frontend: http://localhost:3000" -ForegroundColor Green
-  Write-Host "Backend:  http://localhost:8000/docs" -ForegroundColor Green
+  Write-Host "Frontend: http://localhost:$webPort" -ForegroundColor Green
+  Write-Host "Backend:  http://localhost:$apiPort/docs" -ForegroundColor Green
 }
 
 function Invoke-LocalCompose {
@@ -169,15 +206,19 @@ function Invoke-WslCompose {
   & wsl @wslArgs
 }
 
+function Write-RefreshFailureMessage {
+  Write-Host "Image refresh failed while trying to get the latest deployment image." -ForegroundColor Yellow
+  Write-Host "If the error mentions GHCR, Docker Hub, or a registry timeout, check your network and retry." -ForegroundColor Yellow
+  Write-Host "Running without refresh may reuse an old image and not reflect the latest code." -ForegroundColor Yellow
+}
+
 if (Test-LocalDockerDaemon) {
   Write-Host "Using local Docker daemon..." -ForegroundColor Green
   Invoke-LocalCompose
   if ($LASTEXITCODE -eq 0) {
     Wait-ForServices
-  } elseif (Is-BuildMode) {
-    Write-Host "Build failed while trying to refresh images from the latest source." -ForegroundColor Yellow
-    Write-Host "If the error mentions Docker Hub, check your network and retry." -ForegroundColor Yellow
-    Write-Host "Running without --build may reuse an old image and not reflect the latest code." -ForegroundColor Yellow
+  } elseif (Is-RefreshMode) {
+    Write-RefreshFailureMessage
   }
   exit $LASTEXITCODE
 }
@@ -187,10 +228,8 @@ if (Test-WslDockerDaemon) {
   Invoke-WslCompose
   if ($LASTEXITCODE -eq 0) {
     Wait-ForServices
-  } elseif (Is-BuildMode) {
-    Write-Host "Build failed while trying to refresh images from the latest source." -ForegroundColor Yellow
-    Write-Host "If the error mentions Docker Hub, check your network and retry." -ForegroundColor Yellow
-    Write-Host "Running without --build may reuse an old image and not reflect the latest code." -ForegroundColor Yellow
+  } elseif (Is-RefreshMode) {
+    Write-RefreshFailureMessage
   }
   exit $LASTEXITCODE
 }
