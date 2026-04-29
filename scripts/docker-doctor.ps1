@@ -75,7 +75,15 @@ $wslDetail = if ($wslAvailable) { "WSL is available." } else { "WSL was not foun
 Write-Status "wsl command" $wslAvailable $wslDetail
 
 if ($wslAvailable) {
-  $wslDockerAvailable = Invoke-Quiet { wsl sh -lc "command -v docker >/dev/null 2>&1 && docker version >/dev/null 2>&1" }
+  $wslDockerAvailable = $false
+  try {
+    $distros = (& wsl -l -q 2>$null) | Where-Object { $_ -and $_.Trim() -ne "" }
+    if ($distros) {
+      $wslDockerAvailable = Invoke-Quiet { wsl docker version }
+    }
+  } catch {
+    $wslDockerAvailable = $false
+  }
   $wslDockerDetail = if ($wslDockerAvailable) { "Docker Engine is reachable inside WSL." } else { "Docker in WSL was not found or is not running." }
   Write-Status "docker in WSL" $wslDockerAvailable $wslDockerDetail
 }
